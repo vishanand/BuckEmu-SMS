@@ -4,6 +4,7 @@
 
 
 Memory::Memory(SMS& smsP) : sms(smsP) {
+    mapReg = 0;
     page0 = 0;
     page1 = 1;
     page2 = 2;
@@ -21,7 +22,7 @@ uint8_t Memory::getByte(uint16_t addr){
         return sms.cart.getByte(page1, addr);
     } else if (addr < 0xC000){
         // ROM Page 2 or Cartridge RAM
-        // TODO: Enable cartridge RAM functionality
+        // TODO: Enable cartridge RAM functionality (gamesaves)
         return sms.cart.getByte(page2, addr);
     } else if (addr < 0xE000){
         // 8 KB System RAM
@@ -41,7 +42,7 @@ void Memory::setByte(uint16_t addr, uint8_t val){
     } else if (addr < 0xE000){
         // 8 KB System RAM
         RAM[addr - 0xC000] = val;
-    } else if (addr < 0xFCCC){
+    } else {
         // mirror of System RAM
         RAM[addr - 0xE000] = val;
     }

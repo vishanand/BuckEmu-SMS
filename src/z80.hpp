@@ -4,6 +4,7 @@
 
 class Z80 {
     public:
+        Z80();
 
     private:
         // CPU registers
