@@ -63,7 +63,7 @@ class Z80 {
         SMS& sms; // reference to SMS object
 
         inline int prefixED(); // ED prefix instructions
-        inline uint16_t fetchWord();
+        inline uint16_t fetch16();
         inline void push(uint16_t word);
         inline uint16_t pop();
 };
