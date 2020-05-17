@@ -25,6 +25,8 @@ bool Cartridge::openROM(std::string filename){
     for (int i=0; i<8; i++){
         data[i] = (char) Banks[0].mem[0x7FF0 + i];
     }
+
+    numBanks = Banks.size();
     
     return data.compare(chksum) == 0;
 }
@@ -34,9 +36,9 @@ Cartridge::~Cartridge(){
 }
 
 uint8_t Cartridge::getByte(uint8_t page, uint16_t addr){
-    return Banks[page % Banks.size()].mem[addr];
+    return Banks[page % numBanks].mem[addr];
 }
 
 void Cartridge::setByte(uint8_t page, uint16_t addr, uint8_t val){
-    Banks[page % Banks.size()].mem[addr] = val;
+    Banks[page % numBanks].mem[addr] = val;
 }
