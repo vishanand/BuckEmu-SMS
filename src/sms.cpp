@@ -2,5 +2,4 @@
 
 SMS::SMS() : mem(*this), z80(*this) {
 
-};
-
+}

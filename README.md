@@ -3,8 +3,10 @@
 An Emulator for the Sega Master System in C++.
 
 Compile with:
-`g++ -std=c++98 src/*.cpp`
-(TODO: Makefile)
+`make`
+
+Run with:
+`./a.out`
 
 Code Style: Tabs are 4 Spaces.
 
