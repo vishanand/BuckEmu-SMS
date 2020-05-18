@@ -3,6 +3,30 @@
 
 /* Here lie the macro helpers */
 
+// macros to manipulate bit n of byte x
+#define SetBit(x,n)     ((x) |= (1<<(n)))
+#define ClearBit(x,n)   ((x) &= ~(1<<(n)))
+#define FlipBit(x,n)    ((x) ^= (1<<(n)))
+#define CheckBit(x,n)   ((x) & (1<<(n)))
+
+// define flag constants 
+#define CF  0   // Carry flag
+#define NF  1   // Subtract (negative) flag
+#define PVF 2   // Parity/Overflow flag
+#define HF  4   // Half carry flag
+#define ZF  6   // Zero flag
+#define SF  7   // Sign flag
+
+// define condition codes
+#define z_CC   (CheckBit(F, ZF))  // ZF set
+#define c_CC   (CheckBit(F, CF))  // CF set
+#define pe_CC   (CheckBit(F, PVF))  // PVF set
+#define m_CC   (CheckBit(F, SF))  // SF set
+#define nz_CC   (!z_CC)  // ZF reset
+#define nc_CC   (!c_CC)  // CF reset
+#define po_CC   (!pe_CC)  // PVF reset
+#define p_CC   (!m_CC)  // SF reset
+
 // sets interrupt mode to M
 #define IM(M){  \
     cycles = 8; \
@@ -58,6 +82,26 @@
     break;  \
 }
 
+// return if condition is true
+#define RET_CC(cc){ \
+    cycles = 5; \
+    if (cc){    \
+        cycles = 11;    \
+        PC = pop(); \
+    }   \
+    break;  \
+}
+
+// jump if condition is true
+#define JP_CC(cc){  \
+    cycles = 10;    \
+    uint16_t addr = fetch16();  \
+    if (cc){    \
+        PC = addr;  \
+    }    \
+    break; \
+}
+
 // pushes register to stack
 #define pushReg(reg){   \
     cycles = 11;    \
@@ -79,6 +123,9 @@
     b = tmpSwp;   \
 }
 
+// increment last 7 bits of R register
+#define R_inc() R = (R & 0x80) | ((R+1) & 0x7F);
+
 
 /* Here lie the class method implementations */
 
@@ -94,6 +141,7 @@ Z80::Z80(SMS& smsP) : sms(smsP){
 
 int Z80::runInstruction(){
     int cycles = 4; // default amount of cycles
+    R_inc(); // increment refresh register each fetch
 
     // fetch instruction
     uint8_t opcode = sms.mem.getByte(PC++);
@@ -445,10 +493,18 @@ int Z80::runInstruction(){
         // LD a,a
         case 0x7F:
             LD_r8_r8(A,A);
+
+        // RET nz
+        case 0xC0:
+            RET_CC(nz_CC);
         
         // POP bc
         case 0xC1:
             popReg(BC);
+
+        // JP nz,**
+        case 0xC2:
+            JP_CC(nz_CC);
 
         // JP **
         case 0xC3:
@@ -460,6 +516,20 @@ int Z80::runInstruction(){
         case 0xC5:
             pushReg(BC);
 
+        // RET z
+        case 0xC8:
+            RET_CC(z_CC);
+
+        // RET
+        case 0xC9:
+            cycles = 10;
+            PC = pop();
+            break;
+
+        // JP z,**
+        case 0xCA:
+            JP_CC(z_CC);
+
         // CALL **
         case 0xCD:
             cycles = 17;
@@ -467,9 +537,17 @@ int Z80::runInstruction(){
             PC = fetch16();
             break;
 
+        // RET nc
+        case 0xD0:
+            RET_CC(nc_CC);
+
         // POP de
         case 0xD1:
             popReg(DE);
+
+        // JP nc,**
+        case 0xD2:
+            JP_CC(nc_CC);
 
         // OUT (*),a
         case 0xD3:
@@ -481,6 +559,10 @@ int Z80::runInstruction(){
         case 0xD5:
             pushReg(DE);
 
+        // RET c
+        case 0xD8:
+            RET_CC(c_CC);
+
         // EXX
         case 0xD9:
             swap16(BC, BC_s);
@@ -488,22 +570,50 @@ int Z80::runInstruction(){
             swap16(HL, HL_s);
             break;
 
+        // JP c,**
+        case 0xDA:
+            JP_CC(c_CC);
+
+        // RET po
+        case 0xE0:
+            RET_CC(po_CC);
+
         // POP hl
         case 0xE1:
             popReg(HL);
 
+        // JP po,**
+        case 0xE2:
+            JP_CC(po_CC);
+
         // PUSH hl
         case 0xE5:
             pushReg(HL);
+
+        // RET pe
+        case 0xE8:
+            RET_CC(pe_CC);
+
+        // JP pe,**
+        case 0xEA:
+            JP_CC(pe_CC);
 
         // ED prefix: Extended Instructions
         case 0xED:
             return prefixED();
             break;
 
+        // RET p
+        case 0xF0:
+            RET_CC(p_CC);
+
         // POP af
         case 0xF1:
             popReg(AF);
+
+        // JP p,**
+        case 0xF2:
+            JP_CC(p_CC);
 
         // DI: disable interrupts
         case 0xF3:
@@ -514,6 +624,14 @@ int Z80::runInstruction(){
         // PUSH af
         case 0xF5:
             pushReg(AF);
+
+        // RET m
+        case 0xF8:
+            RET_CC(m_CC);
+
+        // JP m,**
+        case 0xFA:
+            JP_CC(m_CC);
 
         // EI: enable interrupts
         case 0xFB:
@@ -533,6 +651,7 @@ int Z80::runInstruction(){
 // execute ED prefix instructions
 inline int Z80::prefixED(){
     int cycles = 8;
+    R_inc();
 
     // fetch rest of instruction
     uint8_t opcode = sms.mem.getByte(PC++);
@@ -553,6 +672,38 @@ inline int Z80::prefixED(){
         case 0x5E:
         case 0x7E:
             IM(2);
+
+        // LDI
+        case 0xA0:
+            cycles = 16;
+            LDI_LDD(1);
+            break;
+
+        // LDD
+        case 0xA8:
+            cycles = 16;
+            LDI_LDD(-1);
+            break;
+
+        // LDIR
+        case 0xB0:
+            cycles = 16;
+            LDI_LDD(1);
+            if (BC > 0){ // repeat instruction until BC is 0
+                PC -= 2;
+                cycles = 21;
+            }
+            break;
+
+        // LDDR
+        case 0xB8:
+            cycles = 16;
+            LDI_LDD(-1);
+            if (BC > 0){ // repeat instruction until BC is 0
+                PC -= 2;
+                cycles = 21;
+            }
+            break;
         
         default:
             cycles = 69;
@@ -588,4 +739,25 @@ inline uint16_t Z80::pop(){
     w |= sms.mem.getByte(SP);
     SP += 2;
     return w;
+}
+
+// LDI and LDD instructions
+// INC=1 to increment HL,DE     (LDI mode)
+// INC=-1 to decrement HL,DE    (LDD mode)
+// Copies a byte from (HL) to (DE)
+inline void Z80::LDI_LDD(int8_t INC){
+    uint8_t tmpByte = sms.mem.getByte(HL);
+    sms.mem.setByte(DE, tmpByte);
+    
+    HL += INC;
+    DE += INC;
+    BC--;
+    if (BC > 0){
+        SetBit(F, PVF);
+    } else {
+        ClearBit(F, PVF);
+    }
+
+    ClearBit(F, HF);
+    ClearBit(F, NF);
 }
