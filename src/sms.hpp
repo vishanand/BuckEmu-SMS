@@ -1,7 +1,7 @@
 #ifndef SMS_H
 #define SMS_H
 
-#include "z80.hpp"
+#include "z80/z80.hpp"
 #include "memory.hpp"
 #include "cartridge.hpp"
 #include "ports.hpp"
