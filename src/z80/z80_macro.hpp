@@ -123,6 +123,40 @@
     b = tmpSwp;   \
 }
 
+// CPI and CPD helper
+#define CPI_CPD(){  \
+    cycles = 16;    \
+    SUB_FLAGS(sms.mem.getByte(HL)); \
+    if (BC != 0)    \
+        SetBit(F, PVF); \
+    else    \
+        ClearBit(F, PVF);   \
+    BC--;   \
+}
+
+// JR cc,*  - Jump relative if condition met
+#define JR_CC(cc){  \
+    int8_t rAddr = (int8_t) sms.mem.getByte(PC++);   \
+    cycles = 7; \
+    if (cc){    \
+        PC = PC + rAddr;  \
+        cycles = 12;    \
+    }   \
+}
+
+// CALL on condition code
+#define CALL_CC(cc){    \
+    if (cc){    \
+        cycles = 17;    \
+        push(PC+2); \
+        PC = fetch16(); \
+    } else {    \
+        cycles = 10;    \
+        PC += 2;    \
+    }   \
+    break;  \
+}
+
 // increment last 7 bits of R register
 #define R_inc() R = (R & 0x80) | ((R+1) & 0x7F);
 

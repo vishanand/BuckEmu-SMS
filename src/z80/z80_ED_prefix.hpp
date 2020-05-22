@@ -36,10 +36,22 @@ inline int Z80::prefixED(){
             LDI_LDD(1);
             break;
 
+        // CPI
+        case 0xA1:
+            CPI_CPD();
+            HL++;
+            break;
+
         // LDD
         case 0xA8:
             cycles = 16;
             LDI_LDD(-1);
+            break;
+
+        // CPD
+        case 0xA9:
+            CPI_CPD();
+            HL--;
             break;
 
         // LDIR
@@ -52,11 +64,33 @@ inline int Z80::prefixED(){
             }
             break;
 
+        // CPIR
+        case 0xB1:
+            CPI_CPD();
+            HL++;
+            // repeat unless BC == 0 or (hl) == 0
+            if (BC != 0 && !CheckBit(F, ZF)){
+                PC -= 2;
+                cycles = 21;
+            }
+            break;
+
         // LDDR
         case 0xB8:
             cycles = 16;
             LDI_LDD(-1);
             if (BC > 0){ // repeat instruction until BC is 0
+                PC -= 2;
+                cycles = 21;
+            }
+            break;
+
+        // CPDR
+        case 0xB9:
+            CPI_CPD();
+            HL--;
+            // repeat unless BC == 0 or (hl) == 0
+            if (BC != 0 && !CheckBit(F, ZF)){
                 PC -= 2;
                 cycles = 21;
             }

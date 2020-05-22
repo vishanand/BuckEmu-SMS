@@ -64,3 +64,32 @@ inline void Z80::LDI_LDD(int8_t INC){
     ClearBit(F, HF);
     ClearBit(F, NF);
 }
+
+// set subtraction flags
+inline void Z80::SUB_FLAGS(uint8_t N){
+    // Zero flag
+    if (A == N)
+        SetBit(F, ZF);
+    else
+        ClearBit(F, ZF);
+
+    // Carry, Sign, Overflow flags
+    if (A < N){
+        SetBit(F, CF);
+        SetBit(F, SF);
+        SetBit(F, PVF);
+    } else{
+        ClearBit(F, CF);
+        ClearBit(F, SF);
+        ClearBit(F, PVF);
+    }
+
+    // Half-carry flag
+    if (((A & 0xf) - (N & 0xf)) & 0x10)
+        SetBit(F, HF);
+    else
+        ClearBit(F, HF);
+
+    // Subtract flag
+    SetBit(F, NF);
+}

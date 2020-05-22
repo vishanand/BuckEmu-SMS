@@ -24,6 +24,12 @@ int Z80::runInstruction(){
         case 0x01:
             LD_r16_imm(BC);
 
+        // LD (bc),a
+        case 0x02:
+            cycles = 7;
+            sms.mem.setByte(BC, A);
+            break;
+
         // INC bc
         case 0x03:
             INC_R16(BC);
@@ -37,6 +43,12 @@ int Z80::runInstruction(){
             swap16(AF, AF_s);
             break;
 
+        // LD a,(bc)
+        case 0x0A:
+            cycles = 7;
+            A = sms.mem.getByte(BC);
+            break;
+
         // DEC bc
         case 0x0B:
             DEC_R16(BC);
@@ -45,9 +57,22 @@ int Z80::runInstruction(){
         case 0x0E:
             LD_r8_imm(C);
 
+        // DJNZ
+        case 0x10:
+            B--;
+            JR_CC(B != 0);
+            cycles++;
+            break;
+
         // LD de,**
         case 0x11:
             LD_r16_imm(DE);
+
+        // LD (de),a
+        case 0x12:
+            cycles = 7;
+            sms.mem.setByte(DE, A);
+            break;
 
         // INC de
         case 0x13:
@@ -57,6 +82,17 @@ int Z80::runInstruction(){
         case 0x16:
             LD_r8_imm(D);
 
+        // JR *
+        case 0x18:
+            JR_CC(true);
+            break;
+
+        // LD a,(de)
+        case 0x1A:
+            cycles = 7;
+            A = sms.mem.getByte(DE);
+            break;
+
         // DEC de
         case 0x1B:
             DEC_R16(DE);
@@ -65,9 +101,23 @@ int Z80::runInstruction(){
         case 0x1E:
             LD_r8_imm(E);
 
+        // JR nz,*
+        case 0x20:
+            JR_CC(nz_CC);
+            break;
+
         // LD hl,**
         case 0x21:
             LD_r16_imm(HL);
+
+        // LD (**),hl
+        case 0x22:{
+            cycles = 16;
+            uint16_t addr = fetch16();
+            sms.mem.setByte(addr, L);
+            sms.mem.setByte(addr + 1, H);
+            break;
+        }
 
         // INC hl
         case 0x23:
@@ -77,6 +127,20 @@ int Z80::runInstruction(){
         case 0x26:
             LD_r8_imm(H);
 
+        // JR z,*
+        case 0x28:
+            JR_CC(z_CC);
+            break;
+
+        // LD hl,(**)
+        case 0x2A:{
+            cycles = 16;
+            uint16_t addr = fetch16();
+            L = sms.mem.getByte(addr);
+            H = sms.mem.getByte(addr + 1);
+            break; 
+        }
+
         // DEC hl
         case 0x2B:
             DEC_R16(HL);
@@ -85,9 +149,20 @@ int Z80::runInstruction(){
         case 0x2E:
             LD_r8_imm(L);
 
+        // JR nc,*
+        case 0x30:
+            JR_CC(nc_CC);
+            break;
+
         // LD sp,**
         case 0x31:
             LD_r16_imm(SP);
+
+        // LD (**),a
+        case 0x32:
+            cycles = 13;
+            sms.mem.setByte(fetch16(), A);
+            break;
 
         // INC sp
         case 0x33:
@@ -99,7 +174,18 @@ int Z80::runInstruction(){
             uint8_t tmpByte = sms.mem.getByte(PC++);
             sms.mem.setByte(HL, tmpByte);
             break;
-        }            
+        }
+
+        // JR c,*
+        case 0x38:
+            JR_CC(c_CC);
+            break;
+
+        // LD a,(**)
+        case 0x3A:
+            cycles = 13;
+            A = sms.mem.getByte(fetch16());   
+            break;
 
         // DEC sp
         case 0x3B:
@@ -361,6 +447,98 @@ int Z80::runInstruction(){
         case 0x7F:
             LD_r8_r8(A,A);
 
+        // SUB b
+        case 0x90:
+            SUB_FLAGS(B);
+            A -= B;
+            break;
+
+        // SUB c
+        case 0x91:
+            SUB_FLAGS(C);
+            A -= C;
+            break;
+
+        // SUB d
+        case 0x92:
+            SUB_FLAGS(D);
+            A -= D;
+            break;
+
+        // SUB e
+        case 0x93:
+            SUB_FLAGS(E);
+            A -= E;
+            break;
+
+        // SUB h
+        case 0x94:
+            SUB_FLAGS(H);
+            A -= H;
+            break;
+
+        // SUB l
+        case 0x95:
+            SUB_FLAGS(L);
+            A -= L;
+            break;
+
+        // SUB (hl)
+        case 0x96:{
+            cycles = 7;
+            uint8_t tmpByte = sms.mem.getByte(HL);
+            SUB_FLAGS(tmpByte);
+            A -= tmpByte;
+            break;
+        }
+
+        // SUB a
+        case 0x97:
+            SUB_FLAGS(A);
+            A -= A;
+            break;
+
+        // CP b
+        case 0xB8:
+            SUB_FLAGS(B);
+            break;
+
+        // CP c
+        case 0xB9:
+            SUB_FLAGS(C);
+            break;
+
+        // CP d
+        case 0xBA:
+            SUB_FLAGS(D);
+            break;
+
+        // CP e
+        case 0xBB:
+            SUB_FLAGS(E);
+            break;
+
+        // CP h
+        case 0xBC:
+            SUB_FLAGS(H);
+            break;
+
+        // CP l
+        case 0xBD:
+            SUB_FLAGS(L);
+            break;
+
+        // CP (hl)
+        case 0xBE:
+            cycles = 7;
+            SUB_FLAGS(sms.mem.getByte(HL));
+            break;
+
+        // CP a
+        case 0xBF:
+            SUB_FLAGS(A);
+            break;
+
         // RET nz
         case 0xC0:
             RET_CC(nz_CC);
@@ -378,6 +556,10 @@ int Z80::runInstruction(){
             cycles = 10;
             PC = fetch16();
             break;
+
+        // CALL nz,**
+        case 0xC4:
+            CALL_CC(nz_CC);
 
         // PUSH bc
         case 0xC5:
@@ -397,12 +579,13 @@ int Z80::runInstruction(){
         case 0xCA:
             JP_CC(z_CC);
 
+        // CALL z,**
+        case 0xCC:
+            CALL_CC(z_CC);
+
         // CALL **
         case 0xCD:
-            cycles = 17;
-            push(PC+2);
-            PC = fetch16();
-            break;
+            CALL_CC(true);
 
         // RET nc
         case 0xD0:
@@ -422,9 +605,22 @@ int Z80::runInstruction(){
             sms.ports.write(sms.mem.getByte(PC++), A);
             break;
 
+        // CALL nc,**
+        case 0xD4:
+            CALL_CC(nc_CC);
+
         // PUSH de
         case 0xD5:
             pushReg(DE);
+
+        // SUB *
+        case 0xD6: {
+            cycles = 7;
+            uint8_t tmpByte = sms.mem.getByte(PC++);
+            SUB_FLAGS(tmpByte);
+            A -= tmpByte;
+            break;            
+        }
 
         // RET c
         case 0xD8:
@@ -441,6 +637,10 @@ int Z80::runInstruction(){
         case 0xDA:
             JP_CC(c_CC);
 
+        // CALL c,**
+        case 0xDC:
+            CALL_CC(c_CC);
+
         // RET po
         case 0xE0:
             RET_CC(po_CC);
@@ -452,6 +652,10 @@ int Z80::runInstruction(){
         // JP po,**
         case 0xE2:
             JP_CC(po_CC);
+
+        // CALL po,**
+        case 0xE4:
+            CALL_CC(po_CC);
 
         // PUSH hl
         case 0xE5:
@@ -465,9 +669,13 @@ int Z80::runInstruction(){
         case 0xEA:
             JP_CC(pe_CC);
 
+        // CALL pe,**
+        case 0xEC:
+            CALL_CC(pe_CC);
+
         // ED prefix: Extended Instructions
         case 0xED:
-            return prefixED();
+            cycles = prefixED();
             break;
 
         // RET p
@@ -488,6 +696,10 @@ int Z80::runInstruction(){
             IFF2 = 0;
             break;
 
+        // CALL p,**
+        case 0xF4:
+            CALL_CC(p_CC);
+
         // PUSH af
         case 0xF5:
             pushReg(AF);
@@ -504,6 +716,16 @@ int Z80::runInstruction(){
         case 0xFB:
             IFF1 = 1;
             IFF2 = 1;
+            break;
+
+        // CALL m,**
+        case 0xFC:
+            CALL_CC(m_CC);
+
+        // CP *
+        case 0xFE:
+            cycles = 7;
+            SUB_FLAGS(sms.mem.getByte(PC++));
             break;
 
         // Unimplemented instruction
