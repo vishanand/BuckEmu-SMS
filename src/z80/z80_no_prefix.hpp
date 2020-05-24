@@ -4,6 +4,7 @@
 #include "z80.hpp"
 #include "z80_macro.hpp"
 #include "../sms.hpp"
+#include <cstdio>
 
 // execute no prefix instructions
 int Z80::runInstruction(){
@@ -34,6 +35,16 @@ int Z80::runInstruction(){
         case 0x03:
             INC_R16(BC);
 
+        // INC b
+        case 0x04:
+            INC_R8(B);
+            break;
+
+        // DEC b
+        case 0x05:
+            DEC_R8(B);
+            break;
+
         // LD b,*
         case 0x06:
             LD_r8_imm(B);
@@ -52,6 +63,16 @@ int Z80::runInstruction(){
         // DEC bc
         case 0x0B:
             DEC_R16(BC);
+
+        // INC c
+        case 0x0C:
+            INC_R8(C);
+            break;
+
+        // DEC c
+        case 0x0D:
+            DEC_R8(C);
+            break;
         
         // LD c,*
         case 0x0E:
@@ -78,6 +99,16 @@ int Z80::runInstruction(){
         case 0x13:
             INC_R16(DE);
 
+        // INC d
+        case 0x14:
+            INC_R8(D);
+            break;
+
+        // DEC d
+        case 0x15:
+            DEC_R8(D);
+            break;
+
         // LD d,*
         case 0x16:
             LD_r8_imm(D);
@@ -96,6 +127,16 @@ int Z80::runInstruction(){
         // DEC de
         case 0x1B:
             DEC_R16(DE);
+
+        // INC e
+        case 0x1C:
+            INC_R8(E);
+            break;
+
+        // DEC e
+        case 0x1D:
+            DEC_R8(E);
+            break;
 
         // LD e,*
         case 0x1E:
@@ -123,6 +164,16 @@ int Z80::runInstruction(){
         case 0x23:
             INC_R16(HL);
 
+        // INC h
+        case 0x24:
+            INC_R8(H);
+            break;
+
+        // DEC h
+        case 0x25:
+            DEC_R8(H);
+            break;
+
         // LD h,*
         case 0x26:
             LD_r8_imm(H);
@@ -144,6 +195,16 @@ int Z80::runInstruction(){
         // DEC hl
         case 0x2B:
             DEC_R16(HL);
+
+        // INC l
+        case 0x2C:
+            INC_R8(L);
+            break;
+
+        // DEC l
+        case 0x2D:
+            DEC_R8(L);
+            break;
 
         // LD l,*
         case 0x2E:
@@ -168,6 +229,24 @@ int Z80::runInstruction(){
         case 0x33:
             INC_R16(SP);
 
+        // INC (hl)
+        case 0x34:{
+            cycles = 11;
+            uint8_t tmp = sms.mem.getByte(HL);
+            INC_R8(tmp);
+            sms.mem.setByte(HL, tmp);
+            break;
+        }
+
+        // DEC (hl)
+        case 0x35:{
+            cycles = 11;
+            uint8_t tmp = sms.mem.getByte(HL);
+            DEC_R8(tmp);
+            sms.mem.setByte(HL, tmp);
+            break;
+        }
+
         // LD (hl),*
         case 0x36: {
             cycles = 10;
@@ -190,6 +269,16 @@ int Z80::runInstruction(){
         // DEC sp
         case 0x3B:
             DEC_R16(SP);
+
+        // INC a
+        case 0x3C:
+            INC_R8(A);
+            break;
+
+        // DEC a
+        case 0x3D:
+            DEC_R8(A);
+            break;
 
         // LD a,*
         case 0x3E:
@@ -498,6 +587,105 @@ int Z80::runInstruction(){
             A -= A;
             break;
 
+        // AND b
+        case 0xA0:
+            AND_R8(B);
+
+        // AND c
+        case 0xA1:
+            AND_R8(C);
+
+        // AND d
+        case 0xA2:
+            AND_R8(D);
+
+        // AND e
+        case 0xA3:
+            AND_R8(E);
+
+        // AND h
+        case 0xA4:
+            AND_R8(H);
+
+        // AND l
+        case 0xA5:
+            AND_R8(L);
+
+        // AND (hl)
+        case 0xA6:
+            cycles = 7;
+            AND_R8(sms.mem.getByte(HL));
+
+        // AND a
+        case 0xA7:
+            AND_R8(A);
+
+        // XOR b
+        case 0xA8:
+            XOR_R8(B);
+
+        // XOR c
+        case 0xA9:
+            XOR_R8(C);
+
+        // XOR d
+        case 0xAA:
+            XOR_R8(D);
+
+        // XOR e
+        case 0xAB:
+            XOR_R8(E);
+
+        // XOR h
+        case 0xAC:
+            XOR_R8(H);
+
+        // XOR l
+        case 0xAD:
+            XOR_R8(L);
+
+        // XOR (hl)
+        case 0xAE:
+            cycles = 7;
+            XOR_R8(sms.mem.getByte(HL));
+
+        // XOR a
+        case 0xAF:
+            XOR_R8(A);
+
+        // OR b
+        case 0xB0:
+            OR_R8(B);
+
+        // OR c
+        case 0xB1:
+            OR_R8(C);
+
+        // OR d
+        case 0xB2:
+            OR_R8(D);
+
+        // OR e
+        case 0xB3:
+            OR_R8(E);
+
+        // OR h
+        case 0xB4:
+            OR_R8(H);
+
+        // OR l
+        case 0xB5:
+            OR_R8(L);
+
+        // OR (hl)
+        case 0xB6:
+            cycles = 7;
+            OR_R8(sms.mem.getByte(HL));
+
+        // OR a
+        case 0xB7:
+            OR_R8(A);
+
         // CP b
         case 0xB8:
             SUB_FLAGS(B);
@@ -653,6 +841,18 @@ int Z80::runInstruction(){
         case 0xE2:
             JP_CC(po_CC);
 
+        // EX (sp),hl
+        case 0xE3:{
+            cycles = 19;
+            uint8_t tmpSwap = sms.mem.getByte(SP);
+            sms.mem.setByte(SP, L);
+            L = tmpSwap;
+            tmpSwap = sms.mem.getByte(SP+1);
+            sms.mem.setByte(SP+1, H);
+            H = tmpSwap;
+            break;
+        }
+
         // CALL po,**
         case 0xE4:
             CALL_CC(po_CC);
@@ -660,6 +860,13 @@ int Z80::runInstruction(){
         // PUSH hl
         case 0xE5:
             pushReg(HL);
+
+        // AND *
+        case 0xE6:{
+            cycles = 7;
+            uint8_t tmpByte = sms.mem.getByte(PC++);
+            AND_R8(tmpByte);
+        }
 
         // RET pe
         case 0xE8:
@@ -677,6 +884,13 @@ int Z80::runInstruction(){
         case 0xED:
             cycles = prefixED();
             break;
+
+        // XOR *
+        case 0xEE:{
+            cycles = 7;
+            uint8_t tmpByte = sms.mem.getByte(PC++);
+            XOR_R8(tmpByte);
+        }
 
         // RET p
         case 0xF0:
@@ -703,6 +917,13 @@ int Z80::runInstruction(){
         // PUSH af
         case 0xF5:
             pushReg(AF);
+
+        // OR *
+        case 0xF6:{
+            cycles = 7;
+            uint8_t tmpByte = sms.mem.getByte(PC++);
+            OR_R8(tmpByte);
+        }
 
         // RET m
         case 0xF8:

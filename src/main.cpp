@@ -17,6 +17,7 @@ int main(){
 
     // run instructions until we hit an unimplemented instruction
     int cycles = 0;
+    int instCnt = 0;
     std::printf("\nStarting emulation at 0x00!\n");
     while (cycles < 69){
         uint16_t pc = sms.z80.getPC();
@@ -26,8 +27,12 @@ int main(){
         }
 
         cycles = sms.z80.runInstruction();
-
-        std::printf("PC: 0x%X \tOpcode: 0x%X \tCycles: %d\n", pc, opcode, cycles);
+        instCnt++;
+        
+        if (cycles >= 69){
+            std::printf("Ran %d instructions, hit unimplemented opcode:\n", instCnt);
+            std::printf("PC: 0x%X \tOpcode: 0x%X \tCycles: %d\n", pc, opcode, cycles);
+        }
     }
     
     return 0;

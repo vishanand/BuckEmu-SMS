@@ -157,6 +157,80 @@
     break;  \
 }
 
+// set Zero and Sign flags based on register
+#define SZ_FLAGS(reg){  \
+    if ((reg) == 0)   SetBit(F, ZF);  \
+    else    ClearBit(F, ZF);    \
+    if (CheckBit((reg), SF))  SetBit(F, SF);  \
+    else    ClearBit(F, SF);    \
+}
+
+// Set Parity flag based on register
+#define PARITY_FLAG(reg){   \
+    if (getParity(reg)) SetBit(F, PVF);    \
+    else    ClearBit(F, PVF);   \
+}
+
+// AND operation
+#define AND_R8(reg){    \
+    ClearBit(F, CF);    \
+    ClearBit(F, NF);    \
+    SetBit(F, HF);  \
+    A = A & (reg);  \
+    PARITY_FLAG(A); \
+    SZ_FLAGS(A);    \
+    break;  \
+}
+
+// OR operation
+#define OR_R8(reg){    \
+    ClearBit(F, CF);    \
+    ClearBit(F, NF);    \
+    ClearBit(F, HF);  \
+    A = A | (reg);  \
+    PARITY_FLAG(A); \
+    SZ_FLAGS(A);    \
+    break;  \
+}
+
+// XOR operation
+#define XOR_R8(reg){    \
+    ClearBit(F, CF);    \
+    ClearBit(F, NF);    \
+    ClearBit(F, HF);  \
+    A = A ^ (reg);  \
+    PARITY_FLAG(A); \
+    SZ_FLAGS(A);    \
+    break;  \
+}
+
+// Increment 8-bit register
+#define INC_R8(reg){    \
+    if ((( (reg) & 0xF) + (1 & 0xF)) & 0x10)    SetBit(F, HF);  \
+    else    ClearBit(F, HF);    \
+    ClearBit(F, NF);    \
+    reg++;  \
+    if (reg == 0)   SetBit(F, PVF);  \
+    else    ClearBit(F, PVF);    \
+    SZ_FLAGS(reg);  \
+}
+
+// Decrement 8-bit register
+#define DEC_R8(reg){    \
+    if ((( (reg) & 0xF) - (1 & 0xF)) & 0x10)    SetBit(F, HF);  \
+    else    ClearBit(F, HF);    \
+    SetBit(F, NF);    \
+    if (reg == 0)   SetBit(F, PVF);  \
+    else    ClearBit(F, PVF);    \
+    reg--;  \
+    SZ_FLAGS(reg);  \
+}
+
+// add two 16-bit registers
+#define ADD_16(reg1, reg2){ \
+    \
+}
+
 // increment last 7 bits of R register
 #define R_inc() R = (R & 0x80) | ((R+1) & 0x7F);
 

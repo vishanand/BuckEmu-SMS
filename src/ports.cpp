@@ -12,11 +12,12 @@ void Ports::write(uint8_t port, uint8_t val){
 
     // SDSC control port
     if (port == 0xFC){
-        std::printf("SDSC Control Port: %d\n", val);
+        std::printf("SDSC Control Port: %d\n\n", val);
     }
 
     // SDSC data output
     else if (port == 0xFD){
-        std::printf("SDSC Data Port: %c\n", val);
+        //std::printf("SDSC Data Port: %c\n", val);
+        std::printf("%c", val);
     }
 }

@@ -32,8 +32,8 @@ inline uint16_t Z80::fetch16(){
 
 inline void Z80::push(uint16_t w){
     SP -= 2;
-    sms.mem.setByte(SP, (uint8_t) w & 0xFF);
-    sms.mem.setByte(SP + 1, (uint8_t) w >> 8);
+    sms.mem.setByte(SP, (uint8_t) (w & 0xFF));
+    sms.mem.setByte(SP + 1, (uint8_t) (w >> 8));
 }
 
 inline uint16_t Z80::pop(){
@@ -85,11 +85,20 @@ inline void Z80::SUB_FLAGS(uint8_t N){
     }
 
     // Half-carry flag
-    if (((A & 0xf) - (N & 0xf)) & 0x10)
+    if (((A & 0xF) - (N & 0xF)) & 0x10)
         SetBit(F, HF);
     else
         ClearBit(F, HF);
 
     // Subtract flag
     SetBit(F, NF);
+}
+
+// Get Parity of Byte
+inline bool Z80::getParity(uint8_t N){
+    uint8_t x = N;
+    x ^= x >> 4;
+    x ^= x >> 2;
+    x ^= x >> 1;
+    return (~x) & 1;
 }
