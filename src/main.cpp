@@ -18,19 +18,26 @@ int main(){
     // run instructions until we hit an unimplemented instruction
     int cycles = 0;
     int instCnt = 0;
+    int cycCnt = 0;
     std::printf("\nStarting emulation at 0x00!\n");
     while (cycles < 69){
         uint16_t pc = sms.z80.getPC();
-        uint16_t opcode = sms.mem.getByte(pc);
-        if (opcode == 0xED){
+        uint32_t opcode = sms.mem.getByte(pc);
+        if (opcode == 0xED || opcode == 0xDD || opcode == 0xFD || opcode == 0xCB){
             opcode = (opcode << 8) | sms.mem.getByte(pc+1);
+            
+            if ((opcode & 0xFF) == 0xCB){
+                opcode = (opcode << 8) | sms.mem.getByte(pc+2);
+                opcode = (opcode << 8) | sms.mem.getByte(pc+3);
+            }
         }
 
         cycles = sms.z80.runInstruction();
+        cycCnt += cycles;
         instCnt++;
         
         if (cycles >= 69){
-            std::printf("Ran %d instructions, hit unimplemented opcode:\n", instCnt);
+            std::printf("\n\nRan %d instructions, %d cycles, hit unimplemented opcode:\n", instCnt, cycCnt);
             std::printf("PC: 0x%X \tOpcode: 0x%X \tCycles: %d\n", pc, opcode, cycles);
         }
     }

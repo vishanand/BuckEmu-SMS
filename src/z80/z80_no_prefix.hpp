@@ -49,9 +49,31 @@ int Z80::runInstruction(){
         case 0x06:
             LD_r8_imm(B);
 
+        // RLCA
+        case 0x07:{
+            bool MSB = CheckBit(A, 7);
+            A <<= 1;
+            if (MSB){
+                SetBit(A, 0);
+                SetBit(F, CF);
+            } else {
+                ClearBit(A, 0);
+                ClearBit(F, CF);
+            }
+            ClearBit(F, NF);
+            ClearBit(F, HF);
+            break;
+        }
+
         // EX af,af'
         case 0x08:
             swap16(AF, AF_s);
+            break;
+
+        // ADD hl,bc
+        case 0x09:
+            cycles = 11;
+            ADD_R16(HL, BC);
             break;
 
         // LD a,(bc)
@@ -77,6 +99,22 @@ int Z80::runInstruction(){
         // LD c,*
         case 0x0E:
             LD_r8_imm(C);
+
+        // RRCA
+        case 0x0F:{
+            bool LSB = CheckBit(A, 0);
+            A >>= 1;
+            if (LSB){
+                SetBit(A, 7);
+                SetBit(F, CF);
+            } else {
+                ClearBit(A, 7);
+                ClearBit(F, CF);
+            }
+            ClearBit(F, NF);
+            ClearBit(F, HF);
+            break;
+        }
 
         // DJNZ
         case 0x10:
@@ -113,9 +151,32 @@ int Z80::runInstruction(){
         case 0x16:
             LD_r8_imm(D);
 
+        // RLA
+        case 0x17:{
+            bool MSB = CheckBit(A, 7);
+            bool prevCF = CheckBit(F, CF);
+            A <<= 1;
+
+            if (MSB)    SetBit(F, CF);
+            else    ClearBit(F, CF);
+
+            if (prevCF)  SetBit(A, 0);
+            else    ClearBit(A, 0);
+
+            ClearBit(F, NF);
+            ClearBit(F, HF);
+            break;
+        }
+
         // JR *
         case 0x18:
             JR_CC(true);
+            break;
+
+        // ADD hl,de
+        case 0x19:
+            cycles = 11;
+            ADD_R16(HL, DE);
             break;
 
         // LD a,(de)
@@ -142,6 +203,22 @@ int Z80::runInstruction(){
         case 0x1E:
             LD_r8_imm(E);
 
+        // RRA
+        case 0x1F:{
+            bool LSB = CheckBit(A, 0);
+            bool prevCF = CheckBit(F, CF);
+            A >>= 1;
+            
+            if (LSB)    SetBit(F, CF);
+            else    ClearBit(F, CF);
+            if (prevCF) SetBit(A, 7);
+            else    ClearBit(A, 7);
+
+            ClearBit(F, NF);
+            ClearBit(F, HF);
+            break;
+        }
+
         // JR nz,*
         case 0x20:
             JR_CC(nz_CC);
@@ -152,13 +229,9 @@ int Z80::runInstruction(){
             LD_r16_imm(HL);
 
         // LD (**),hl
-        case 0x22:{
+        case 0x22:
             cycles = 16;
-            uint16_t addr = fetch16();
-            sms.mem.setByte(addr, L);
-            sms.mem.setByte(addr + 1, H);
-            break;
-        }
+            LD_mem_r16(H,L);
 
         // INC hl
         case 0x23:
@@ -183,14 +256,16 @@ int Z80::runInstruction(){
             JR_CC(z_CC);
             break;
 
+        // ADD hl,hl
+        case 0x29:
+            cycles = 11;
+            ADD_R16(HL, HL);
+            break;
+
         // LD hl,(**)
-        case 0x2A:{
+        case 0x2A:
             cycles = 16;
-            uint16_t addr = fetch16();
-            L = sms.mem.getByte(addr);
-            H = sms.mem.getByte(addr + 1);
-            break; 
-        }
+            LD_r16_mem(H, L);
 
         // DEC hl
         case 0x2B:
@@ -258,6 +333,12 @@ int Z80::runInstruction(){
         // JR c,*
         case 0x38:
             JR_CC(c_CC);
+            break;
+
+        // ADD hl,sp
+        case 0x39:
+            cycles = 11;
+            ADD_R16(HL, SP);
             break;
 
         // LD a,(**)
@@ -536,6 +617,49 @@ int Z80::runInstruction(){
         case 0x7F:
             LD_r8_r8(A,A);
 
+        // ADD a, b
+        case 0x80:
+            ADD_A_R8(A);
+            break;
+
+        // ADD a, c
+        case 0x81:
+            ADD_A_R8(C);
+            break;
+
+        // ADD a, d
+        case 0x82:
+            ADD_A_R8(D);
+            break;
+
+        // ADD a, e
+        case 0x83:
+            ADD_A_R8(E);
+            break;
+
+        // ADD a, h
+        case 0x84:
+            ADD_A_R8(H);
+            break;
+
+        // ADD a, l
+        case 0x85:
+            ADD_A_R8(L);
+            break;
+
+        // ADD a, (hl)
+        case 0x86:{
+            cycles = 7;
+            uint8_t tmpByte = sms.mem.getByte(HL);
+            ADD_A_R8(tmpByte);
+            break;
+        }
+
+        // ADD a, a
+        case 0x87:
+            ADD_A_R8(A);
+            break;
+
         // SUB b
         case 0x90:
             SUB_FLAGS(B);
@@ -753,6 +877,14 @@ int Z80::runInstruction(){
         case 0xC5:
             pushReg(BC);
 
+        // ADD a,*
+        case 0xC6: {
+            cycles = 7;
+            uint8_t tmpByte = sms.mem.getByte(PC++);
+            ADD_A_R8(tmpByte);
+            break;            
+        }
+
         // RET z
         case 0xC8:
             RET_CC(z_CC);
@@ -828,6 +960,11 @@ int Z80::runInstruction(){
         // CALL c,**
         case 0xDC:
             CALL_CC(c_CC);
+        
+         // DD prefix: IX Instructions
+        case 0xDD:
+            cycles = prefix_xD(IX, IX_H, IX_L);
+            break;
 
         // RET po
         case 0xE0:
@@ -875,6 +1012,11 @@ int Z80::runInstruction(){
         // JP pe,**
         case 0xEA:
             JP_CC(pe_CC);
+
+        // EX de,hl
+        case 0xEB:
+            swap16(DE, HL);
+            break;
 
         // CALL pe,**
         case 0xEC:
@@ -942,6 +1084,11 @@ int Z80::runInstruction(){
         // CALL m,**
         case 0xFC:
             CALL_CC(m_CC);
+
+        // FD prefix: IY Instructions
+        case 0xFD:
+            cycles = prefix_xD(IY, IY_H, IY_L);
+            break;
 
         // CP *
         case 0xFE:

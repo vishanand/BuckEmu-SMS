@@ -15,14 +15,57 @@ inline int Z80::prefixED(){
 
     // decode and execute rest of instruction
     switch (opcode){
+
+        // LD (**),bc
+        case 0x43:
+            cycles = 20;
+            LD_mem_r16(B,C);
+
+        // LD bc,(**)
+        case 0x4B:
+            cycles = 20;
+            LD_r16_mem(B,C);
+
+        // LD (**),de
+        case 0x53:
+            cycles = 20;
+            LD_mem_r16(D,E);
+
+        // LD de,(**)
+        case 0x5B:
+            cycles = 20;
+            LD_r16_mem(D,E);
+
+        // LD (**),hl
+        case 0x63:
+            cycles = 20;
+            LD_mem_r16(H,L);
+
+        // LD hl,(**)
+        case 0x6B:
+            cycles = 20;
+            LD_r16_mem(H,L);
+
+        // LD (**),sp
+        case 0x73:
+            cycles = 20;
+            LD_mem_r16(SP_H, SP_L);
+
+        // LD sp,(**)
+        case 0x7B:
+            cycles = 20;
+            LD_r16_mem(SP_H, SP_L);
+
         // IM 0
         case 0x46:
         case 0x66:
             IM(0);
 
-        // IM 1
+        // IM 1, IM 0/1
         case 0x56:
         case 0x76:
+        case 0x4E:
+        case 0x6E:
             IM(1);
 
         // IM 2

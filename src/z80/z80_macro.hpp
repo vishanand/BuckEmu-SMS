@@ -227,8 +227,68 @@
 }
 
 // add two 16-bit registers
-#define ADD_16(reg1, reg2){ \
+#define ADD_R16(reg1, reg2){ \
+    ClearBit(F, NF);    \
+    if ((( (reg1) & 0xFFF) + ((reg2) & 0xFFF)) & 0x1000)    SetBit(F, HF);  \
+    else    ClearBit(F, HF);    \
+    uint32_t tmp = reg1 + reg2; \
+    if (tmp & 0x10000)  SetBit(F, CF);  \
+    else    ClearBit(F, CF);    \
+    reg1 = (uint16_t) tmp;  \
+}
+
+// add 8 bit register to A
+#define ADD_A_R8(reg){  \
+    ClearBit(F, NF);    \
+    if ((( (A) & 0xF) + ((reg) & 0xF)) & 0x10)  SetBit(F, HF);  \
+    else    ClearBit(F, HF);     \
     \
+    uint8_t oldA = A;   \
+    A = A + reg;    \
+    if (A < oldA){  \
+        SetBit(F, CF);  \
+        SetBit(F, PVF); \
+    } else {    \
+        ClearBit(F, CF);    \
+        ClearBit(F, PVF);   \
+    }   \
+    \
+    SZ_FLAGS(A);    \
+}
+
+// Load from 16 bit register to memory
+#define LD_mem_r16(regH, regL){ \
+    uint16_t addr = fetch16();  \
+    sms.mem.setByte(addr, regL);    \
+    sms.mem.setByte(addr + 1, regH);    \
+    break;  \
+}
+
+// Load from memory to 16 bit register
+#define LD_r16_mem(regH, regL){ \
+    uint16_t addr = fetch16();  \
+    regL = sms.mem.getByte(addr);   \
+    regH = sms.mem.getByte(addr + 1);   \
+    break;  \
+}
+
+// get offset
+#define GET_OFFSET()    int8_t offset = (int8_t) sms.mem.getByte(PC++);
+
+// loads reg into (iz+*)
+#define LD_IZ_offset_r8(reg){  \
+    cycles = 19; \
+    GET_OFFSET(); \
+    sms.mem.setByte(IZ + offset, reg);   \
+    break;  \
+}
+
+// loads contents of (iz+*) into reg
+#define LD_r8_IZ_offset(reg){  \
+    cycles = 19; \
+    GET_OFFSET();   \
+    reg = sms.mem.getByte(IZ + offset);    \
+    break;  \
 }
 
 // increment last 7 bits of R register

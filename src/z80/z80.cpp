@@ -5,6 +5,9 @@
 #include "z80_macro.hpp"
 #include "z80_no_prefix.hpp"
 #include "z80_ED_prefix.hpp"
+#include "z80_CB_prefix.hpp"
+#include "z80_DD_FD_prefix.hpp"
+#include "z80_xDCB_prefix.hpp"
 
 Z80::Z80(SMS& smsP) : sms(smsP){
     // default register values

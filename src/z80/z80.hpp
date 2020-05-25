@@ -44,10 +44,31 @@ class Z80 {
             };
         };
 
-        uint16_t IX; // index X, Y
-        uint16_t IY;
+        union {     // IX register
+            uint16_t IX;
+            struct {
+                uint8_t IX_L;
+                uint8_t IX_H;
+            };
+        };
+
+        union {     // IY register
+            uint16_t IY;
+            struct {
+                uint8_t IY_L;
+                uint8_t IY_H;
+            };
+        };
+
+        union {     // SP stack pointer
+            uint16_t SP;
+            struct {
+                uint8_t SP_L;
+                uint8_t SP_H;
+            };
+        };
+
         uint16_t PC; // program counter
-        uint16_t SP; // stack pointer
         uint8_t I;   // interrupt
         uint8_t R;   // refresh (used as RNG)
         bool IFF1;  // interrupt flip flops 1, 2
@@ -64,6 +85,9 @@ class Z80 {
 
         // helper functions
         inline int prefixED();
+        inline int prefixCB();
+        inline int prefix_xD(uint16_t &IZ, uint8_t &IZ_H, uint8_t &IZ_L);
+        inline int prefix_xDCB(uint16_t &IZ, uint8_t &IZ_H, uint8_t &IZ_L);
         inline uint16_t fetch16();
         inline void push(uint16_t word);
         inline uint16_t pop();
