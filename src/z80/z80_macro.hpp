@@ -126,12 +126,15 @@
 // CPI and CPD helper
 #define CPI_CPD(){  \
     cycles = 16;    \
+    bool origCF = CheckBit(F, CF);  \
     SUB_FLAGS(sms.mem.getByte(HL)); \
+    BC--;   \
     if (BC != 0)    \
         SetBit(F, PVF); \
     else    \
         ClearBit(F, PVF);   \
-    BC--;   \
+    if (origCF) SetBit(F, CF);  \
+    else    ClearBit(F, CF);    \
 }
 
 // JR cc,*  - Jump relative if condition met
@@ -210,7 +213,7 @@
     else    ClearBit(F, HF);    \
     ClearBit(F, NF);    \
     reg++;  \
-    if (reg == 0)   SetBit(F, PVF);  \
+    if (reg == 0x80)   SetBit(F, PVF);  \
     else    ClearBit(F, PVF);    \
     SZ_FLAGS(reg);  \
 }
@@ -220,7 +223,7 @@
     if ((( (reg) & 0xF) - (1 & 0xF)) & 0x10)    SetBit(F, HF);  \
     else    ClearBit(F, HF);    \
     SetBit(F, NF);    \
-    if (reg == 0)   SetBit(F, PVF);  \
+    if (reg == 0x80)   SetBit(F, PVF);  \
     else    ClearBit(F, PVF);    \
     reg--;  \
     SZ_FLAGS(reg);  \
@@ -289,6 +292,148 @@
     GET_OFFSET();   \
     reg = sms.mem.getByte(IZ + offset);    \
     break;  \
+}
+
+// BIT instruction
+#define BIT_INST(N, reg){   \
+    if (N == 7 && CheckBit(reg, 7)) SetBit(F, SF);  \
+    ClearBit(F, NF);    \
+    SetBit(F, HF);  \
+    if (CheckBit(reg, N)){  \
+        ClearBit(F, ZF);    \
+        ClearBit(F, PVF);   \
+    } else{ \
+        SetBit(F, ZF);  \
+        SetBit(F, PVF); \
+    }   \
+}
+
+// RES instruction
+#define RES_INST(N, reg){   \
+    ClearBit(reg, N); \
+}
+
+// SET instruction
+#define SET_INST(N, reg){   \
+    SetBit(reg, N); \
+}
+
+// RLC
+#define RLC_shift(reg){   \
+    ClearBit(F, NF);    \
+    ClearBit(F, HF);    \
+    bool MSB = CheckBit(reg, 7);    \
+    reg <<= 1;  \
+    if (MSB){   \
+        SetBit(F, CF);  \
+        SetBit(reg, 0); \
+    } else {    \
+        ClearBit(F, CF);    \
+        ClearBit(reg, 0);   \
+    }   \
+    PARITY_FLAG(reg);   \
+    SZ_FLAGS(reg);  \
+}
+
+// RRC
+#define RRC_shift(reg){   \
+    ClearBit(F, NF);    \
+    ClearBit(F, HF);    \
+    bool LSB = CheckBit(reg, 0);    \
+    reg >>= 1;  \
+    if (LSB){   \
+        SetBit(F, CF);  \
+        SetBit(reg, 7); \
+    } else {    \
+        ClearBit(F, CF);    \
+        ClearBit(reg, 7);   \
+    }   \
+    PARITY_FLAG(reg);   \
+    SZ_FLAGS(reg);  \
+}
+
+// RL
+#define RL_shift(reg){   \
+    ClearBit(F, NF);    \
+    ClearBit(F, HF);    \
+    bool MSB = CheckBit(reg, 7);    \
+    bool prevCF = CheckBit(F, CF);   \
+    reg <<= 1;  \
+    if (MSB)    SetBit(F, CF);  \
+    else    ClearBit(F, CF);    \
+    if (prevCF) SetBit(reg, 0); \
+    else    ClearBit(reg, 0);   \
+    PARITY_FLAG(reg);   \
+    SZ_FLAGS(reg);  \
+}
+
+// RR
+#define RR_shift(reg){   \
+    ClearBit(F, NF);    \
+    ClearBit(F, HF);    \
+    bool LSB = CheckBit(reg, 0);    \
+    bool prevCF = CheckBit(F, CF);   \
+    reg >>= 1;  \
+    if (LSB)    SetBit(F, CF);  \
+    else    ClearBit(F, CF);    \
+    if (prevCF) SetBit(reg, 7); \
+    else    ClearBit(reg, 7);   \
+    PARITY_FLAG(reg);   \
+    SZ_FLAGS(reg);  \
+}
+
+// SLA
+#define SLA_shift(reg){   \
+    ClearBit(F, NF);    \
+    ClearBit(F, HF);    \
+    bool MSB = CheckBit(reg, 7);    \
+    reg <<= 1;  \
+    if (MSB)    SetBit(F, CF);  \
+    else    ClearBit(F, CF);    \
+    ClearBit(reg, 0);   \
+    PARITY_FLAG(reg);   \
+    SZ_FLAGS(reg);  \
+}
+
+// SRA
+#define SRA_shift(reg){   \
+    ClearBit(F, NF);    \
+    ClearBit(F, HF);    \
+    bool LSB = CheckBit(reg, 0);    \
+    bool MSB = CheckBit(reg, 7);    \
+    reg >>= 1;  \
+    if (LSB)    SetBit(F, CF);  \
+    else    ClearBit(F, CF);    \
+    if (MSB)    SetBit(reg, 7); \
+    else    ClearBit(reg, 7);   \
+    PARITY_FLAG(reg);   \
+    SZ_FLAGS(reg);  \
+}
+
+// SLL
+#define SLL_shift(reg){   \
+    ClearBit(F, NF);    \
+    ClearBit(F, HF);    \
+    bool MSB = CheckBit(reg, 7);    \
+    reg <<= 1;  \
+    if (MSB)    SetBit(F, CF);  \
+    else    ClearBit(F, CF);    \
+    SetBit(reg, 0);   \
+    PARITY_FLAG(reg);   \
+    SZ_FLAGS(reg);  \
+}
+
+// SRL
+#define SRL_shift(reg){   \
+    ClearBit(F, NF);    \
+    ClearBit(F, HF);    \
+    bool LSB = CheckBit(reg, 0);    \
+    reg >>= 1;  \
+    if (LSB)    SetBit(F, CF);  \
+    else    ClearBit(F, CF);    \
+    ClearBit(reg, 7);   \
+    PARITY_FLAG(reg);   \
+    SZ_FLAGS(reg);  \
 }
 
 // increment last 7 bits of R register

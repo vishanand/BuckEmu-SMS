@@ -76,15 +76,13 @@ inline void Z80::SUB_FLAGS(uint8_t N){
     else
         ClearBit(F, ZF);
 
-    // Carry, Sign, Overflow flags
+    // Carry, Sign flags
     if (A < N){
         SetBit(F, CF);
         SetBit(F, SF);
-        SetBit(F, PVF);
     } else{
         ClearBit(F, CF);
         ClearBit(F, SF);
-        ClearBit(F, PVF);
     }
 
     // Half-carry flag
@@ -92,6 +90,15 @@ inline void Z80::SUB_FLAGS(uint8_t N){
         SetBit(F, HF);
     else
         ClearBit(F, HF);
+
+    // Overflow flag
+    if ((int8_t) A < (int8_t) N){
+        if (CheckBit(F, SF))    ClearBit(F, PVF);
+        else    SetBit(F, PVF);
+    } else{
+        if (CheckBit(F, SF))    SetBit(F, PVF);
+        else    ClearBit(F, PVF);
+    }
 
     // Subtract flag
     SetBit(F, NF);

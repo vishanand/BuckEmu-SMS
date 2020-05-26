@@ -100,7 +100,7 @@ inline int Z80::prefix_xD(uint16_t &IZ, uint8_t &IZ_H, uint8_t &IZ_L){
         // INC (iz+*)
         case 0x34:{
             cycles = 23;
-            GET_OFFSET()
+            GET_OFFSET();
             uint8_t tmp = sms.mem.getByte(IZ + offset);
             INC_R8(tmp);
             sms.mem.setByte(IZ + offset, tmp);

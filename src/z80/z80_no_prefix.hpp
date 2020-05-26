@@ -899,6 +899,11 @@ int Z80::runInstruction(){
         case 0xCA:
             JP_CC(z_CC);
 
+        // CB prefix
+        case 0xCB:
+            cycles = prefixCB();
+            break;
+
         // CALL z,**
         case 0xCC:
             CALL_CC(z_CC);

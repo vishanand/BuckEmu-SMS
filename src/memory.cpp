@@ -1,4 +1,3 @@
-#include <cstdio>
 #include "sms.hpp"
 #include "memory.hpp"
 
@@ -47,6 +46,7 @@ void Memory::setByte(uint16_t addr, uint8_t val){
         RAM[addr - 0xE000] = val;
     }
 
+    // ROM paging
     switch (addr){
         case 0xFFFC:
             mapReg = val;
