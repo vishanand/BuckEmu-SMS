@@ -92,7 +92,7 @@ class Z80 {
         inline void push(uint16_t word);
         inline uint16_t pop();
         inline void LDI_LDD(int8_t INC);
-        inline void SUB_FLAGS(uint8_t N);
+        inline void SUB_FLAGS(uint8_t Reg, uint8_t N);
         inline bool getParity(uint8_t N);
 };
 

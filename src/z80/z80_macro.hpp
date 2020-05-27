@@ -127,7 +127,7 @@
 #define CPI_CPD(){  \
     cycles = 16;    \
     bool origCF = CheckBit(F, CF);  \
-    SUB_FLAGS(sms.mem.getByte(HL)); \
+    SUB_FLAGS(A, sms.mem.getByte(HL)); \
     BC--;   \
     if (BC != 0)    \
         SetBit(F, PVF); \
@@ -248,14 +248,10 @@
     \
     uint8_t oldA = A;   \
     A = A + reg;    \
-    if (A < oldA){  \
-        SetBit(F, CF);  \
-        SetBit(F, PVF); \
-    } else {    \
-        ClearBit(F, CF);    \
-        ClearBit(F, PVF);   \
-    }   \
-    \
+    if (A < oldA)  SetBit(F, CF);  \
+    else    ClearBit(F,CF); \
+    if ((int8_t)A < (int8_t)oldA)  SetBit(F, PVF);  \
+    else    ClearBit(F,PVF); \
     SZ_FLAGS(A);    \
 }
 
@@ -434,6 +430,34 @@
     ClearBit(reg, 7);   \
     PARITY_FLAG(reg);   \
     SZ_FLAGS(reg);  \
+}
+
+// RST
+#define RST_inst(loc){  \
+    cycles = 11;    \
+    push(PC+2); \
+    PC = loc; \
+    break;  \
+}
+
+// SUB instruction
+#define SUB_INST(reg){  \
+    SUB_FLAGS(A, reg);  \
+    A -= reg;   \
+}
+
+// CP instruction
+#define CP_INST(reg){   \
+    SUB_FLAGS(A, reg);  \
+}
+
+// run an index operation such as
+// oper (iz+*)
+#define DO_INDX_OP(oper){   \
+    cycles = 19;    \
+    GET_OFFSET();   \
+    oper(sms.mem.getByte(IZ + offset)); \
+    break;  \
 }
 
 // increment last 7 bits of R register

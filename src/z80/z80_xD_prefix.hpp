@@ -132,6 +132,14 @@ inline int Z80::prefix_xD(uint16_t &IZ, uint8_t &IZ_H, uint8_t &IZ_L){
             ADD_R16(IZ,SP);
             break;
 
+        // LD b,izh
+        case 0x44:
+            LD_r8_r8(B, IZ_H);
+
+        // LD b,izl
+        case 0x45:
+            LD_r8_r8(B, IZ_L);
+
         // LD b,(ix+*)
         case 0x46:
             LD_r8_IZ_offset(B);
@@ -140,6 +148,14 @@ inline int Z80::prefix_xD(uint16_t &IZ, uint8_t &IZ_H, uint8_t &IZ_L){
         case 0x4E:
             LD_r8_IZ_offset(C);
 
+        // LD d,izh
+        case 0x54:
+            LD_r8_r8(D, IZ_H);
+
+        // LD d,izl
+        case 0x55:
+            LD_r8_r8(D, IZ_L);
+
         // LD d,(ix+*)
         case 0x56:
             LD_r8_IZ_offset(D);
@@ -147,6 +163,14 @@ inline int Z80::prefix_xD(uint16_t &IZ, uint8_t &IZ_H, uint8_t &IZ_L){
         // LD e,(ix+*)
         case 0x5E:
             LD_r8_IZ_offset(E);
+
+        // LD izh,izh
+        case 0x64:
+            LD_r8_r8(IZ_H, IZ_H);
+
+        // LD izh,izl
+        case 0x65:
+            LD_r8_r8(IZ_H, IZ_L);
 
         // LD h,(ix+*)
         case 0x66:
@@ -188,6 +212,30 @@ inline int Z80::prefix_xD(uint16_t &IZ, uint8_t &IZ_H, uint8_t &IZ_L){
         case 0x7E:
             LD_r8_IZ_offset(A);
 
+        // ADD (iz+*)
+        case 0x86:
+            DO_INDX_OP(ADD_A_R8);
+
+        // SUB (iz+*)
+        case 0x96:
+            DO_INDX_OP(SUB_INST);
+
+        // AND (iz+*)
+        case 0xA6:
+            DO_INDX_OP(AND_R8);
+
+        // XOR (iz+*)
+        case 0xAE:
+            DO_INDX_OP(XOR_R8);
+
+        // OR (iz+*)
+        case 0xB6:
+            DO_INDX_OP(OR_R8);
+
+        // CP (iz+*)
+        case 0xBE:
+            DO_INDX_OP(CP_INST);
+
         // DDCB and FDCB prefix instructions
         case 0xCB:
             cycles = prefix_xDCB(IZ, IZ_H, IZ_L);
@@ -199,21 +247,41 @@ inline int Z80::prefix_xD(uint16_t &IZ, uint8_t &IZ_H, uint8_t &IZ_L){
             IZ = pop();
             break;
 
+        // EX (sp),iz
+        case 0xE3:{
+            cycles = 23;
+            uint8_t tmpSwap = sms.mem.getByte(SP);
+            sms.mem.setByte(SP, IZ_L);
+            IZ_L = tmpSwap;
+            tmpSwap = sms.mem.getByte(SP+1);
+            sms.mem.setByte(SP+1, IZ_H);
+            IZ_H = tmpSwap;
+            break;
+        }
+
         // PUSH iz
         case 0xE5:
             cycles = 15;
             push(IZ);
             break;
 
+        // JP (iz)
+        case 0xE9:
+            PC = sms.mem.getByte(IZ);
+            break;
+
+        // ld sp,iz
+        case 0xF9:
+            cycles = 10;
+            SP = IZ;
+            break;
+
         // If another prefix, do a NOP
         case 0xED:
         case 0xDD:
         case 0xFD:
-            PC--;
-            break;
-
         default:
-            cycles = 69;
+            PC--;
             break;
     }
 

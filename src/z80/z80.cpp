@@ -6,7 +6,7 @@
 #include "z80_no_prefix.hpp"
 #include "z80_ED_prefix.hpp"
 #include "z80_CB_prefix.hpp"
-#include "z80_DD_FD_prefix.hpp"
+#include "z80_xD_prefix.hpp"
 #include "z80_xDCB_prefix.hpp"
 
 Z80::Z80(SMS& smsP) : sms(smsP){
@@ -69,30 +69,35 @@ inline void Z80::LDI_LDD(int8_t INC){
 }
 
 // set subtraction flags
-inline void Z80::SUB_FLAGS(uint8_t N){
+inline void Z80::SUB_FLAGS(uint8_t Reg, uint8_t N){
     // Zero flag
-    if (A == N)
+    if (Reg == N)
         SetBit(F, ZF);
     else
         ClearBit(F, ZF);
 
-    // Carry, Sign flags
-    if (A < N){
+    // Carry flag
+    if (Reg < N){
         SetBit(F, CF);
-        SetBit(F, SF);
     } else{
         ClearBit(F, CF);
+    }
+
+    // Sign flag
+    if ((Reg - N) & 0x80){
+        SetBit(F, SF);
+    } else {
         ClearBit(F, SF);
     }
 
     // Half-carry flag
-    if (((A & 0xF) - (N & 0xF)) & 0x10)
+    if (((Reg & 0xF) - (N & 0xF)) & 0x10)
         SetBit(F, HF);
     else
         ClearBit(F, HF);
 
     // Overflow flag
-    if ((int8_t) A < (int8_t) N){
+    if ((int8_t) Reg < (int8_t) N){
         if (CheckBit(F, SF))    ClearBit(F, PVF);
         else    SetBit(F, PVF);
     } else{
