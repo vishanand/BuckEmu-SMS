@@ -94,6 +94,7 @@ class Z80 {
         inline void LDI_LDD(int8_t INC);
         inline void SUB_FLAGS(uint8_t Reg, uint8_t N);
         inline bool getParity(uint8_t N);
+        inline void DAA_inst();
 };
 
 #endif

@@ -117,3 +117,61 @@ inline bool Z80::getParity(uint8_t N){
     x ^= x >> 1;
     return (~x) & 1;
 }
+
+// DAA instruction
+// decoding based off of http://www.z80.info/z80syntx.htm#DAA
+inline void Z80::DAA_inst(){
+    uint8_t adjst = 0x00; // adjustment factor
+
+    uint8_t high = A >> 4;   // high nibble of A
+    uint8_t low = A & 0xF;    // low nibble of A
+    bool cF = CheckBit(F, CF);
+    bool hF = CheckBit(F, HF);
+
+    // adjust for addition
+    if (!CheckBit(F, NF)){
+        if (!cF && (high < 0xA) && !hF && (low < 0xA)){
+            adjst = 0x00;
+        } else if (!cF && (high < 0x9) && !hF && (low > 0x9)){
+            adjst = 0x06;
+        } else if (!cF && (high < 0xA) && hF && (low < 0x4)){
+            adjst = 0x06;
+        } else if (!cF && (high > 0x9) && !hF && (low < 0xA)){
+            adjst = 0x60;
+            SetBit(F, CF);
+        } else if (!cF && (high > 0x8) && !hF && (low > 0x9)){
+            adjst = 0x66;
+            SetBit(F, CF);
+        } else if (!cF && (high > 0x9) && hF && (low < 0x4)){
+            adjst = 0x66;
+            SetBit(F, CF);
+        } else if (cF && (high < 0x3) && !hF && (low < 0xA)){
+            adjst = 0x60;
+        } else if (cF && (high < 0x3) && !hF && (low > 0x9)){
+            adjst = 0x66;
+        } else if (cF && (high < 0x4) && hF && (low < 0x4)){
+            adjst = 0x66;
+        }
+    }
+
+    // adjust for subtraction
+    else {
+        if (!cF && (high < 0xA) && !hF && (low < 0xA)){
+            adjst = 0x00;
+        } else if (!cF && (high < 0x9) && hF && (low > 0x5)){
+            adjst = 0xFA;
+        } else if (cF && (high > 0x6) && !hF && (low < 0xA)){
+            adjst = 0xA0;
+        } else if (cF && (high > 0x5) && hF && (low > 0x5)){
+            adjst = 0x9A;
+        }
+    }
+
+    // set Half carry, compute adjustment
+    if (((A & 0xF) + (adjst & 0xF)) & 0x10)     SetBit(F, HF);
+    else    ClearBit(F, HF);
+    A = A + adjst;
+
+    PARITY_FLAG(A);
+    SZ_FLAGS(A);
+}

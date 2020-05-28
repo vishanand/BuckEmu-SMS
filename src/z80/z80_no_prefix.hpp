@@ -251,6 +251,11 @@ int Z80::runInstruction(){
         case 0x26:
             LD_r8_imm(H);
 
+        // DAA
+        case 0x27:
+            DAA_inst();
+            break;
+
         // JR z,*
         case 0x28:
             JR_CC(z_CC);
@@ -381,8 +386,9 @@ int Z80::runInstruction(){
 
         // CCF
         case 0x3F:
+            if (CheckBit(F, CF))    SetBit(F, HF);
+            else    ClearBit(F, HF);
             FlipBit(F, CF);
-            FlipBit(F, HF);
             ClearBit(F, NF);            
             break;
 
@@ -681,6 +687,49 @@ int Z80::runInstruction(){
             ADD_A_R8(A);
             break;
 
+        // ADC a, b
+        case 0x88:
+            ADC_A_R8(A);
+            break;
+
+        // ADC a, c
+        case 0x89:
+            ADC_A_R8(C);
+            break;
+
+        // ADC a, d
+        case 0x8A:
+            ADC_A_R8(D);
+            break;
+
+        // ADC a, e
+        case 0x8B:
+            ADC_A_R8(E);
+            break;
+
+        // ADC a, h
+        case 0x8C:
+            ADC_A_R8(H);
+            break;
+
+        // ADC a, l
+        case 0x8D:
+            ADC_A_R8(L);
+            break;
+
+        // ADC a, (hl)
+        case 0x8E:{
+            cycles = 7;
+            uint8_t tmpByte = sms.mem.getByte(HL);
+            ADC_A_R8(tmpByte);
+            break;
+        }
+
+        // ADC a, a
+        case 0x8F:
+            ADC_A_R8(A);
+            break;
+
         // SUB b
         case 0x90:
             SUB_FLAGS(A, B);
@@ -730,6 +779,49 @@ int Z80::runInstruction(){
         case 0x97:
             SUB_FLAGS(A, A);
             A -= A;
+            break;
+
+        // SBC a, b
+        case 0x98:
+            SBC_A_R8(A);
+            break;
+
+        // SBC a, c
+        case 0x99:
+            SBC_A_R8(C);
+            break;
+
+        // SBC a, d
+        case 0x9A:
+            SBC_A_R8(D);
+            break;
+
+        // SBC a, e
+        case 0x9B:
+            SBC_A_R8(E);
+            break;
+
+        // SBC a, h
+        case 0x9C:
+            SBC_A_R8(H);
+            break;
+
+        // SBC a, l
+        case 0x9D:
+            SBC_A_R8(L);
+            break;
+
+        // SBC a, (hl)
+        case 0x9E:{
+            cycles = 7;
+            uint8_t tmpByte = sms.mem.getByte(HL);
+            SBC_A_R8(tmpByte);
+            break;
+        }
+
+        // SBC a, a
+        case 0x9F:
+            SBC_A_R8(A);
             break;
 
         // AND b
@@ -937,6 +1029,14 @@ int Z80::runInstruction(){
         case 0xCD:
             CALL_CC(true);
 
+        // ADC a,*
+        case 0xCE: {
+            cycles = 7;
+            uint8_t tmpByte = sms.mem.getByte(PC++);
+            ADC_A_R8(tmpByte);
+            break;            
+        }
+
         // RST 08h
         case 0xCF:
             RST_inst(0x08);
@@ -995,6 +1095,12 @@ int Z80::runInstruction(){
         case 0xDA:
             JP_CC(c_CC);
 
+        // IN a,(*)
+        case 0xDB:
+            cycles = 11;
+            A = sms.ports.read(sms.mem.getByte(PC++));
+            break;
+
         // CALL c,**
         case 0xDC:
             CALL_CC(c_CC);
@@ -1003,6 +1109,14 @@ int Z80::runInstruction(){
         case 0xDD:
             cycles = prefix_xD(IX, IX_H, IX_L);
             break;
+
+        // SBC *
+        case 0xDE: {
+            cycles = 7;
+            uint8_t tmpByte = sms.mem.getByte(PC++);
+            SBC_A_R8(tmpByte);
+            break;            
+        }
 
         // RST 18h
         case 0xDF:

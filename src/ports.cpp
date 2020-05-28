@@ -4,7 +4,7 @@
 uint8_t Ports::read(uint8_t port){
     // TODO: read from ports
     // https://www.smspower.org/uploads/Development/smstech-20021112.txt
-    return 0;
+    return 0xFF;
 }
 
 void Ports::write(uint8_t port, uint8_t val){

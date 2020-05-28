@@ -234,7 +234,7 @@
     ClearBit(F, NF);    \
     if ((( (reg1) & 0xFFF) + ((reg2) & 0xFFF)) & 0x1000)    SetBit(F, HF);  \
     else    ClearBit(F, HF);    \
-    uint32_t tmp = reg1 + reg2; \
+    uint32_t tmp = (uint32_t)reg1 + (uint32_t)reg2; \
     if (tmp & 0x10000)  SetBit(F, CF);  \
     else    ClearBit(F, CF);    \
     reg1 = (uint16_t) tmp;  \
@@ -245,15 +245,97 @@
     ClearBit(F, NF);    \
     if ((( (A) & 0xF) + ((reg) & 0xF)) & 0x10)  SetBit(F, HF);  \
     else    ClearBit(F, HF);     \
-    \
-    uint8_t oldA = A;   \
-    A = A + reg;    \
-    if (A < oldA)  SetBit(F, CF);  \
-    else    ClearBit(F,CF); \
-    if ((int8_t)A < (int8_t)oldA)  SetBit(F, PVF);  \
-    else    ClearBit(F,PVF); \
+    uint16_t tmp = (uint16_t)A + (uint16_t)reg; \
+    if (tmp & 0x100)    SetBit(F, CF);  \
+    else    ClearBit(F, CF);    \
+    int16_t ovflw = (int16_t)(int8_t)A + (int16_t)(int8_t)reg;  \
+    if (ovflw > 127 || ovflw < -128)    SetBit(F, PVF); \
+    else    ClearBit(F, PVF);   \
+    A = (uint8_t)tmp;   \
     SZ_FLAGS(A);    \
 }
+
+// add with carry 8 bit register to A
+#define ADC_A_R8(reg){  \
+    ClearBit(F, NF);    \
+    uint8_t tmpCarry = 0;   \
+    if (CheckBit(F, CF)) tmpCarry = 1;  \
+    if ((( (A) & 0xF) + ((reg) & 0xF) + tmpCarry) & 0x10)  SetBit(F, HF);  \
+    else    ClearBit(F, HF);     \
+    uint16_t tmp = (uint16_t)A + (uint16_t)reg + tmpCarry; \
+    if (tmp & 0x100)    SetBit(F, CF);  \
+    else    ClearBit(F, CF);    \
+    int16_t ovflw = (int16_t)(int8_t)A + (int16_t)(int8_t)reg + tmpCarry;  \
+    if (ovflw > 127 || ovflw < -128)    SetBit(F, PVF); \
+    else    ClearBit(F, PVF);   \
+    A = (uint8_t)tmp;   \
+    SZ_FLAGS(A);    \
+}
+
+// subtract with carry 8 bit register on A
+#define SBC_A_R8(reg){  \
+    SetBit(F, NF);    \
+    uint8_t tmpCarry = 0;   \
+    if (CheckBit(F, CF)) tmpCarry = 1;  \
+    if ((( (A) & 0xF) - ((reg) & 0xF) - tmpCarry) & 0x10)  SetBit(F, HF);  \
+    else    ClearBit(F, HF);     \
+    uint16_t tmp = (uint16_t)A - (uint16_t)reg - tmpCarry; \
+    if (tmp & 0x100)    SetBit(F, CF);  \
+    else    ClearBit(F, CF);    \
+    int16_t ovflw = (int16_t)(int8_t)A - (int16_t)(int8_t)reg - tmpCarry;  \
+    if (ovflw > 127 || ovflw < -128)    SetBit(F, PVF); \
+    else    ClearBit(F, PVF);   \
+    A = (uint8_t)tmp;   \
+    SZ_FLAGS(A);    \
+}
+
+// set SZ flags for 16 bits
+#define SZ_FLAGS_16(reg){   \
+    if (reg == 0)   SetBit(F, ZF);  \
+    else    ClearBit(F, ZF);    \
+    if (CheckBit(reg, 15))  SetBit(F, SF);  \
+    else    ClearBit(F, SF);    \
+}
+
+// add with carry two 16-bit registers
+#define ADC_R16(reg1, reg2){ \
+    ClearBit(F, NF);    \
+    uint8_t tmpCarry = 0;   \
+    if (CheckBit(F, CF)) tmpCarry = 1;  \
+    if ((( (reg1) & 0xFFF) + ((reg2) & 0xFFF) + tmpCarry) & 0x1000)    SetBit(F, HF);  \
+    else    ClearBit(F, HF);    \
+    uint32_t tmp = (uint32_t)reg1 + (uint32_t)reg2 + tmpCarry; \
+    if (tmp & 0x10000)  SetBit(F, CF);  \
+    else    ClearBit(F, CF);    \
+    int32_t ovflw = (int32_t)(int16_t) reg1 + (int32_t)(int16_t) reg2 + tmpCarry;   \
+    if (ovflw > 32767 || ovflw < -32768)   SetBit(F, PVF); \
+    else    ClearBit(F, PVF);   \
+    reg1 = (uint16_t) tmp;  \
+    SZ_FLAGS_16(reg1);  \
+}
+
+// 16 bit ADC a,reg
+#define ADC_A_R16(reg2)    ADC_R16(A, reg2);
+
+// subtract with carry two 16-bit registers
+#define SBC_R16(reg1, reg2){ \
+    SetBit(F, NF);    \
+    uint8_t tmpCarry = 0;   \
+    if (CheckBit(F, CF)) tmpCarry = 1;  \
+    if ((( (reg1) & 0xFFF) - ((reg2) & 0xFFF) - tmpCarry) & 0x1000)    SetBit(F, HF);  \
+    else    ClearBit(F, HF);    \
+    uint32_t tmp = (uint32_t)reg1 - (uint32_t)reg2 - tmpCarry; \
+    if (tmp & 0x10000)  SetBit(F, CF);  \
+    else    ClearBit(F, CF);    \
+    int32_t ovflw = (int32_t)(int16_t) reg1 - (int32_t)(int16_t) reg2 - tmpCarry;   \
+    if (ovflw > 32767 || ovflw < -32768)   SetBit(F, PVF); \
+    else    ClearBit(F, PVF);   \
+    reg1 = (uint16_t) tmp;  \
+    SZ_FLAGS_16(reg1);  \
+}
+
+// 16 bit SBC a,reg
+#define SBC_A_R16(reg2)    SBC_R16(A, reg2);
 
 // Load from 16 bit register to memory
 #define LD_mem_r16(regH, regL){ \
@@ -457,6 +539,24 @@
     cycles = 19;    \
     GET_OFFSET();   \
     oper(sms.mem.getByte(IZ + offset)); \
+    break;  \
+}
+
+// IN reg,(C)
+#define IN_r8_C(reg){   \
+    cycles = 12;    \
+    ClearBit(F, NF);    \
+    ClearBit(F, HF);    \
+    reg = sms.ports.read(C);    \
+    PARITY_FLAG(reg);   \
+    SZ_FLAGS(reg);  \
+    break;  \
+}
+
+// OUT (C),reg
+#define OUT_C_r8(reg){   \
+    cycles = 12;    \
+    sms.ports.write(C, reg);    \
     break;  \
 }
 

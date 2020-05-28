@@ -4,6 +4,7 @@
 #include "z80.hpp"
 #include "z80_macro.hpp"
 #include "../sms.hpp"
+#include <cstdio>
 
 // execute DD and FD prefix instructions
 // IZ is a reference to either IX or IY
@@ -144,6 +145,14 @@ inline int Z80::prefix_xD(uint16_t &IZ, uint8_t &IZ_H, uint8_t &IZ_L){
         case 0x46:
             LD_r8_IZ_offset(B);
 
+        // LD c,izh
+        case 0x4C:
+            LD_r8_r8(C, IZ_H);
+
+        // LD c,izl
+        case 0x4D:
+            LD_r8_r8(C, IZ_L);
+
         // LD c,(ix+*)
         case 0x4E:
             LD_r8_IZ_offset(C);
@@ -160,9 +169,33 @@ inline int Z80::prefix_xD(uint16_t &IZ, uint8_t &IZ_H, uint8_t &IZ_L){
         case 0x56:
             LD_r8_IZ_offset(D);
 
+        // LD e,izh
+        case 0x5C:
+            LD_r8_r8(E, IZ_H);
+
+        // LD e,izl
+        case 0x5D:
+            LD_r8_r8(E, IZ_L);
+
         // LD e,(ix+*)
         case 0x5E:
             LD_r8_IZ_offset(E);
+
+        // LD izh,b
+        case 0x60:
+            LD_r8_r8(IZ_H, B);
+
+        // LD izh,c
+        case 0x61:
+            LD_r8_r8(IZ_H, C);
+
+        // LD izh,d
+        case 0x62:
+            LD_r8_r8(IZ_H, D);
+
+        // LD izh,e
+        case 0x63:
+            LD_r8_r8(IZ_H, E);
 
         // LD izh,izh
         case 0x64:
@@ -176,9 +209,41 @@ inline int Z80::prefix_xD(uint16_t &IZ, uint8_t &IZ_H, uint8_t &IZ_L){
         case 0x66:
             LD_r8_IZ_offset(H);
 
+        // LD izh,a
+        case 0x67:
+            LD_r8_r8(IZ_H, A);
+
+        // LD izl,b
+        case 0x68:
+            LD_r8_r8(IZ_L, B);
+
+        // LD izl,c
+        case 0x69:
+            LD_r8_r8(IZ_L, C);
+
+        // LD izl,d
+        case 0x6A:
+            LD_r8_r8(IZ_L, D);
+
+        // LD izl,e
+        case 0x6B:
+            LD_r8_r8(IZ_L, E);
+
+        // LD izl,izh
+        case 0x6C:
+            LD_r8_r8(IZ_L, IZ_H);
+
+        // LD izl,izl
+        case 0x6D:
+            LD_r8_r8(IZ_L, IZ_L);
+
         // LD l,(ix+*)
         case 0x6E:
             LD_r8_IZ_offset(L);
+
+        // LD izl,a
+        case 0x6F:
+            LD_r8_r8(IZ_L, A);
 
         // LD (iz+*),b
         case 0x70:
@@ -208,29 +273,121 @@ inline int Z80::prefix_xD(uint16_t &IZ, uint8_t &IZ_H, uint8_t &IZ_L){
         case 0x77:
             LD_IZ_offset_r8(A);
 
+        // LD a,izh
+        case 0x7C:
+            LD_r8_r8(A, IZ_H);
+
+        // LD a,izl
+        case 0x7D:
+            LD_r8_r8(A, IZ_L);
+
         // LD a,(ix+*)
         case 0x7E:
             LD_r8_IZ_offset(A);
+
+        // ADD a,izh
+        case 0x84:
+            ADD_A_R8(IZ_H);
+            break;
+
+        // ADD a,izl
+        case 0x85:
+            ADD_A_R8(IZ_L);
+            break;
 
         // ADD (iz+*)
         case 0x86:
             DO_INDX_OP(ADD_A_R8);
 
+        // ADC a,izh
+        case 0x8C:
+            ADC_A_R8(IZ_H);
+            break;
+
+        // ADC a,izl
+        case 0x8D:
+            ADC_A_R8(IZ_L);
+            break;
+
+        // ADC a,(iz+*)
+        case 0x8E:
+            DO_INDX_OP(ADC_A_R8);
+            break;
+
+        // SUB izh
+        case 0x94:
+            SUB_INST(IZ_H);
+            break;
+
+        // SUB izl
+        case 0x95:
+            SUB_INST(IZ_L);
+            break;
+
         // SUB (iz+*)
         case 0x96:
             DO_INDX_OP(SUB_INST);
+
+        // SBC a,izh
+        case 0x9C:
+            SBC_A_R8(IZ_H);
+            break;
+
+        // SBC a,izl
+        case 0x9D:
+            SBC_A_R8(IZ_L);
+            break;
+
+        // SBC a,(iz+*)
+        case 0x9E:
+            DO_INDX_OP(SBC_A_R8);
+            break;
+
+        // AND izh
+        case 0xA4:
+            AND_R8(IZ_H);
+
+        // AND izl
+        case 0xA5:
+            AND_R8(IZ_L);
 
         // AND (iz+*)
         case 0xA6:
             DO_INDX_OP(AND_R8);
 
+        // XOR izh
+        case 0xAC:
+            XOR_R8(IZ_H);
+
+        // XOR izl
+        case 0xAD:
+            XOR_R8(IZ_L);
+
         // XOR (iz+*)
         case 0xAE:
             DO_INDX_OP(XOR_R8);
 
+        // OR izh
+        case 0xB4:
+            OR_R8(IZ_H);
+            break;
+
+        // OR izl
+        case 0xB5:
+            OR_R8(IZ_L);
+            break;
+
         // OR (iz+*)
         case 0xB6:
             DO_INDX_OP(OR_R8);
+
+        // CP izh
+        case 0xBC:
+            CP_INST(IZ_H);
+
+        // CP izl
+        case 0xBD:
+            CP_INST(IZ_L);
 
         // CP (iz+*)
         case 0xBE:
