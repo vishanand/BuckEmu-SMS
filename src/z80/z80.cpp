@@ -152,6 +152,9 @@ inline void Z80::DAA_inst(){
         } else if (cF && (high < 0x4) && hF && (low < 0x4)){
             adjst = 0x66;
         }
+
+        if (low < 0xA) ClearBit(F, HF);
+        else    SetBit(F, HF);
     }
 
     // adjust for subtraction
@@ -165,11 +168,10 @@ inline void Z80::DAA_inst(){
         } else if (cF && (high > 0x5) && hF && (low > 0x5)){
             adjst = 0x9A;
         }
+
+        if (hF && low > 0x5)    ClearBit(F, HF);
     }
 
-    // set Half carry, compute adjustment
-    if (((A & 0xF) + (adjst & 0xF)) & 0x10)     SetBit(F, HF);
-    else    ClearBit(F, HF);
     A = A + adjst;
 
     PARITY_FLAG(A);

@@ -137,6 +137,36 @@
     else    ClearBit(F, CF);    \
 }
 
+// OUTI and OUTD helper
+// INC=1 for increment, INC=-1 for decrement
+#define OUTI_OUTD(INC){  \
+    cycles = 16;    \
+    uint8_t tmpByte = sms.mem.getByte(HL);  \
+    HL += INC;  \
+    sms.ports.write(C, tmpByte);    \
+    if ((uint16_t)tmpByte + (uint16_t)L > 255){ SetBit(F, CF); SetBit(F, HF); } \
+    else { ClearBit(F, CF); ClearBit(F, HF); } \
+    DEC_R8(B);  \
+    if (CheckBit(tmpByte, 7))   SetBit(F, NF);  \
+    else    ClearBit(F, NF);    \
+    PARITY_FLAG(((tmpByte + L) & 0x7) ^ B); \
+}
+
+// INI and IND helper
+// INC=1 for increment, INC=-1 for decrement
+#define INI_IND(INC){  \
+    cycles = 16;    \
+    uint8_t tmpByte = sms.ports.read(C);  \
+    sms.mem.setByte(HL, tmpByte);    \
+    HL += INC;  \
+    if (((uint16_t)tmpByte + (uint16_t)(C + INC)) > 255){ SetBit(F, CF); SetBit(F, HF); } \
+    else { ClearBit(F, CF); ClearBit(F, HF); } \
+    DEC_R8(B);  \
+    if (CheckBit(tmpByte, 7))   SetBit(F, NF);  \
+    else    ClearBit(F, NF);    \
+    PARITY_FLAG(((tmpByte + C + INC) & 0x7) ^ B); \
+}
+
 // JR cc,*  - Jump relative if condition met
 #define JR_CC(cc){  \
     int8_t rAddr = (int8_t) sms.mem.getByte(PC++);   \

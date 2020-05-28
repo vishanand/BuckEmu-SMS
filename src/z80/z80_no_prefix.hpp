@@ -608,6 +608,11 @@ int Z80::runInstruction(){
         case 0x75:
             LD_HL_r8(L);
 
+        // HALT
+        case 0x76:
+            PC--;
+            break;
+
         // LD (hl),a
         case 0x77:
             LD_HL_r8(A);

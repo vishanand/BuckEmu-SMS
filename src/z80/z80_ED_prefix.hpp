@@ -89,6 +89,8 @@ inline int Z80::prefixED(){
         case 0x57:
             cycles = 9;
             A = I;
+            if (IFF2)   SetBit(F, PVF);
+            else    ClearBit(F, PVF);
             break;
 
         // IN e,(c)
@@ -114,6 +116,8 @@ inline int Z80::prefixED(){
         case 0x5F:
             cycles = 9;
             A = R;
+            if (IFF2)   SetBit(F, PVF);
+            else    ClearBit(F, PVF);
             break;
 
         // IN h,(c)
@@ -239,6 +243,14 @@ inline int Z80::prefixED(){
             break;
         }
 
+        // RETI/RETN
+        case 0x45: case 0x55: case 0x65: case 0x75:
+        case 0x4D: case 0x5D: case 0x6D: case 0x7D:
+            cycles = 14;
+            IFF1 = IFF2;
+            PC = pop();
+            break;
+
         // IM 0
         case 0x46: case 0x66:
             IM(0);
@@ -263,6 +275,16 @@ inline int Z80::prefixED(){
             HL++;
             break;
 
+        // INI
+        case 0xA2:
+            INI_IND(1);
+            break;
+
+        // OUTI
+        case 0xA3:
+            OUTI_OUTD(1);
+            break;
+
         // LDD
         case 0xA8:
             cycles = 16;
@@ -273,6 +295,17 @@ inline int Z80::prefixED(){
         case 0xA9:
             CPI_CPD();
             HL--;
+            break;
+
+        // IND
+        case 0xAA:
+            INI_IND(-1);
+            break;
+
+
+        // OUTD
+        case 0xAB:
+            OUTI_OUTD(-1);
             break;
 
         // LDIR
@@ -296,6 +329,26 @@ inline int Z80::prefixED(){
             }
             break;
 
+        // INIR
+        case 0xB2:
+            INI_IND(1);
+            // repeat until B == 0
+            if (B != 0){
+                PC -= 2;
+                cycles = 21;
+            }
+            break;
+
+        // OTIR
+        case 0xB3:
+            OUTI_OUTD(1);
+            // repeat until B == 0
+            if (B != 0){
+                PC -= 2;
+                cycles = 21;
+            }
+            break;
+
         // LDDR
         case 0xB8:
             cycles = 16;
@@ -312,6 +365,26 @@ inline int Z80::prefixED(){
             HL--;
             // repeat unless BC == 0 or (hl) == 0
             if (BC != 0 && !CheckBit(F, ZF)){
+                PC -= 2;
+                cycles = 21;
+            }
+            break;
+
+        // INDR
+        case 0xBA:
+            INI_IND(-1);
+            // repeat until B == 0
+            if (B != 0){
+                PC -= 2;
+                cycles = 21;
+            }
+            break;
+
+        // OTDR
+        case 0xBB:
+            OUTI_OUTD(-1);
+            // repeat until B == 0
+            if (B != 0){
                 PC -= 2;
                 cycles = 21;
             }
