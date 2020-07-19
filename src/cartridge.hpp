@@ -1,3 +1,4 @@
+// Game Cartridge ROMs
 #ifndef CARTRIDGE_H
 #define CARTRIDGE_H
 #include <cstdint>
