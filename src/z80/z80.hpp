@@ -10,6 +10,7 @@ class Z80 {
         Z80(SMS& smsP);
         int runInstruction();
         int getPC();
+        void interrupt(uint8_t data);
 
     private:
         // CPU registers

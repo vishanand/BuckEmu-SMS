@@ -68,19 +68,11 @@ int main(){
 
         cycCnt -= 228;
         line++;
-
-        // TODO: Run VDP for one line
+        
         sms.vdp.rasterize_line(line, pixels);
 
         if (frame % FPS == 0){ // every 60 frames (one second)
-            //memset(pixels, (rand() % 0xFF), WIDTH * HEIGHT * sizeof(Uint32));
-            uint32_t colour = rand() % 0xFFFFFFFF;
-            for (int i=20; i<256-20; i++){
-                for (int j=20; j<192-20; j++){
-                    pixels[j*WIDTH + i] = colour;
-                }
-            }
-            frame = 0;            
+            frame = 0;     
         }
         if (line % HEIGHT == 0){ // every frame
             SDL_UpdateTexture(texture, NULL, pixels, WIDTH * sizeof(Uint32));
@@ -105,8 +97,7 @@ int main(){
             startTime = SDL_GetTicks();
             frame++;
             line = 0;
-        } 
-        pixels[(5 % HEIGHT) * WIDTH + (100 % WIDTH)] = rand() % 0xFFFFFFFF;                       
+        }                              
     }
 
     // clean up SDL

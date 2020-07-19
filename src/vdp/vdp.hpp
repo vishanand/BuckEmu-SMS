@@ -36,9 +36,11 @@ class VDP {
         bool OVR_flag; // Sprite Overflow (more than 8 sprites in line)
         bool COL_flag; // Sprite Collision    
 
+        uint32_t temp_tile_row[8]; //store 8 pixels temporarily
 
         uint32_t color_conv[0x40]; // correspondence between SMS and SDL colors (6 bit to 24 bit)
         uint8_t interpolate_color(uint8_t color); // convert from 2 bit to 8 bit color
+        inline void rasterize_tile(int line, int col);
 
         SMS& sms; // reference to SMS object
 };

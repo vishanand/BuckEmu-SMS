@@ -24,6 +24,19 @@ int Z80::getPC(){
     return PC;
 }
 
+void Z80::interrupt(uint8_t data){
+    if (IFF1){
+        IFF1 = false;
+
+        if (IM < 2){
+            PC = 0x38;
+        } if (IM == 2){
+            PC = (I*256) + data;
+            PC = fetch16();
+        }
+    }
+}
+
 // fetch 16 bits and increment PC
 inline uint16_t Z80::fetch16(){
     uint16_t w = sms.mem.getByte(PC+1);

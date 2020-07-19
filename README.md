@@ -15,9 +15,13 @@ Run with:
 - [x] Z80 CPU Implementation (Complete)
 - [ ] VDP Graphics (In Progress)
 - [ ] Input (Todo)
+- [ ] Audio (Todo)
 
 BuckEmu SMS running the [ZEXALL](https://www.smspower.org/Homebrew/ZEXALL-SMS) Instruction Exerciser ROM to demonstrate the Z80 CPU executing opcodes:
-![Instruction Exerciser ROM Running](img/zexdoc.gif)
+![Instruction Exerciser ROM Running](img/zexdoc_sdsc.gif)
+
+Running [Only Words](https://www.smspower.org/Homebrew/OnlyWords-SMS) to demonstrate background tiling
+![Only Words ROM Running](img/owdemo.png)
 
 ---
 ### Info
