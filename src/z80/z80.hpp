@@ -11,6 +11,7 @@ class Z80 {
         int runInstruction();
         int getPC();
         void interrupt(uint8_t data);
+        void NMI();
 
     private:
         // CPU registers
@@ -75,7 +76,10 @@ class Z80 {
         uint8_t R;   // refresh (used as RNG)
         bool IFF1;  // interrupt flip flops 1, 2
         bool IFF2;
+        uint8_t EI_f;  // enable interrupts counter (0=do nothing, 1=enable)
         uint8_t IM; // interrupt mode
+        bool halt; // is halted
+        bool NMI_f;
 
         // Shadow registers (can be swapped with normal ones)
         uint8_t AF_s;

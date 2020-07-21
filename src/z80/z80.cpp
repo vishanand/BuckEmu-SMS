@@ -17,6 +17,7 @@ Z80::Z80(SMS& smsP) : sms(smsP){
     IFF1 = false;
     IFF2 = false;
     IM = 0;
+    halt = false;
 }
 
 // return PC
@@ -24,17 +25,29 @@ int Z80::getPC(){
     return PC;
 }
 
+// Maskable Interrupt
 void Z80::interrupt(uint8_t data){
     if (IFF1){
+        if (halt){
+            PC++;
+            halt = false;
+        }
         IFF1 = false;
+        IFF2 = false;
 
         if (IM < 2){
+            push(PC);
             PC = 0x38;
-        } if (IM == 2){
+        } else if (IM == 2){
+            push(PC);
             PC = (I*256) + data;
-            PC = fetch16();
         }
     }
+}
+
+// Non-Maskable Interrupt
+void Z80::NMI(){
+    NMI_f = true;
 }
 
 // fetch 16 bits and increment PC

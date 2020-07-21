@@ -7,6 +7,7 @@ Memory::Memory(SMS& smsP) : sms(smsP) {
     page0 = 0;
     page1 = 1;
     page2 = 2;
+    memset(RAM, 0, 8192);
 }
 
 uint8_t Memory::getByte(uint16_t addr){

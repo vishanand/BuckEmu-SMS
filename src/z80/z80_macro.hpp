@@ -171,7 +171,7 @@
 #define JR_CC(cc){  \
     int8_t rAddr = (int8_t) sms.mem.getByte(PC++);   \
     cycles = 7; \
-    if (cc){    \
+    if ((cc)){    \
         PC = PC + rAddr;  \
         cycles = 12;    \
     }   \

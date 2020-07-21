@@ -13,24 +13,17 @@ VDP::VDP(SMS& smsP) : sms(smsP) {
     for (int i=0; i<64; i++){
         uint8_t blue = interpolate_color((i & 0x30) >> 4);
         uint8_t green = interpolate_color((i & 0xC) >> 2);
-        uint8_t red = interpolate_color(i & 0x3);
-
+        uint8_t red = interpolate_color(i & 0x3);        
         color_conv[i] = (red << 16) | (green << 8) | blue;
     }
+
+    line_counter = 0xFF;
 }
 
 uint8_t VDP::interpolate_color(uint8_t color){
     // convert 2 bit to 8 bit color
-    switch (color){
-        case 0:
-            return 0;
-        case 1:
-            return 85;
-        case 2:
-            return 170;
-        default:
-            return 255;
-    }
+    color = color & 0x3;
+    return (color << 6) | (color << 4) | (color << 2) | (color);
 }
 
 void VDP::write_control(uint8_t data){
@@ -97,8 +90,11 @@ inline void VDP::rasterize_tile(int line, int col){
     bool v_flip = CheckBit(high_byte, 2);
     bool h_flip = CheckBit(high_byte, 1);
 
-    // TODO flips, palettes, priority, etc
-    int ln = (line % 8) * 4;
+    // TODO flips, palettes, priority, etc    
+    int ln = (line % 8) * 4;    
+    if (v_flip){
+        ln = (8 - (line % 8)) * 4;
+    }
     uint8_t b0 = VRAM[(pattern_indx << 5) + ln];
     uint8_t b1 = VRAM[(pattern_indx << 5) + ln + 1];
     uint8_t b2 = VRAM[(pattern_indx << 5) + ln + 2];
@@ -137,45 +133,72 @@ inline void VDP::rasterize_tile(int line, int col){
     }
 }
 
-void VDP::rasterize_line(int line, uint32_t * pixels){
+void VDP::rasterize_line(uint16_t line, uint32_t * pixels){
+    // Frame Interrupts
+    if (line == 0xC1 && CheckBit(VDP_reg[1], 5)){        
+        INT_flag = true;
+        sms.z80.interrupt(0xFF);
+        return;
+    }
+
+    // Line Interrupts
+    if (line_counter == 0 && CheckBit(VDP_reg[0], 4)){        
+        sms.z80.interrupt(0xFF);
+    }
+
+    if (line >= 192){
+        if (line > 192)
+            line_counter = VDP_reg[0xA];
+        return;
+    }
+
+    if (line <= 192){
+        line_counter--;
+        if (line_counter == 0xFF)
+            line_counter = VDP_reg[0xA];
+    }
+
+    // Vertical Scroll
+    if (line == 0){
+        uint8_t v_scroll = VDP_reg[9] % 223;
+        uint8_t v_scroll_row = (v_scroll >> 3);
+        uint8_t v_scroll_fine = v_scroll & 0x7;
+        v_scroll_tot = v_scroll_fine + 8*v_scroll_row;        
+    }
     
     // rasterize background
-    uint8_t backdrop = (VDP_reg[7] & 0xF) | 0x10;
+    uint8_t backdrop = CRAM[(VDP_reg[7] & 0xF)];
 
     uint8_t h_scroll = VDP_reg[8];
-    uint8_t v_scroll = VDP_reg[9];
-
-    if (line < 2 && CheckBit(VDP_reg[0], 6))
+    if (line < 16 && CheckBit(VDP_reg[0], 6))
         h_scroll = 0; // disable h-scroll for row 0+1
-
-    uint8_t col = (h_scroll >> 3);
+    
+    uint8_t col_start = (h_scroll >> 3);
+    uint8_t col = 0;
     uint8_t fine_scroll = h_scroll & 0x7;
+    
     uint8_t row = line / 8;    
 
     if (fine_scroll > 0){
-        rasterize_tile(line, col);
+        rasterize_tile((line - v_scroll_tot) % 224, (col - col_start) % 32);
         for (int i=0; i<fine_scroll; i++){
             pixels[line * 256 + (i % 256)] = color_conv[backdrop];
         }
-        for (int i=fine_scroll; i<8; i++){  // draw partial first column        
-            pixels[line * 256 + (i % 256)] = temp_tile_row[i];
-        }
-        col++;
     }
 
+    // Disable V-Scroll for last 8 cols
+    int vscroll_line = line;
+    if (!CheckBit(VDP_reg[0], 7))
+        vscroll_line -= v_scroll_tot;
+
+    // middle tiles
     for (; col < 32; col++){
-        rasterize_tile(line, col);
+        rasterize_tile((line - v_scroll_tot) % 224, (col - col_start) % 32);
         for (int i=0; i<8; i++){
-            pixels[line * 256 + ((i + col*8) % 256)] = temp_tile_row[i];
+            if (i + col*8 + fine_scroll < 256)            
+                pixels[line * 256 + ((i + col*8 + fine_scroll) % 256)] = temp_tile_row[i];
         }
     }
-
+    
     // DRAW: pixels[y * 256 + (x % 256)] = c;
-
-    if (line == 0xC1){
-        if (CheckBit(VDP_reg[1], 5)){
-            sms.z80.interrupt(0xFF);
-            INT_flag = true;
-        }
-    }
 }

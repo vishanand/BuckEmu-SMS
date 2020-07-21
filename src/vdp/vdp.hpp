@@ -14,10 +14,11 @@ class VDP {
         uint8_t read_control();
         uint8_t read_data();
 
-        void rasterize_line(int line, uint32_t * pixels);
+        void rasterize_line(uint16_t line, uint32_t * pixels);
 
         uint8_t v_counter;
         uint8_t h_counter;
+        uint8_t line_counter;        
 
     private:
         uint8_t VRAM[0x4000]; // Video RAM
@@ -27,6 +28,8 @@ class VDP {
         uint8_t read_buf; // Read Buffer
         uint8_t code_reg; // Code register
         uint16_t addr_reg; // Address register
+
+        uint8_t v_scroll_tot;        
                 
         /* flag set when first byte written, cleared when second byte written,
            cleared when control port read, cleared when data port read/write  */

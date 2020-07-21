@@ -11,6 +11,27 @@ int Z80::runInstruction(){
     int cycles = 4; // default amount of cycles
     R_inc(); // increment refresh register each fetch
 
+    if (EI_f){
+        if (EI_f == 1){
+            IFF1 = 1;
+            IFF2 = 1;
+        }
+        EI_f--;
+    }
+
+    if (NMI_f){
+        NMI_f = false;
+        if (halt){
+            PC++;
+            halt = false;
+        }
+        IFF2 = IFF1;
+        IFF1 = false;
+        push(PC);
+        PC = 0x66;
+        return 11;
+    }
+
     // fetch instruction
     uint8_t opcode = sms.mem.getByte(PC++);
 
@@ -611,6 +632,7 @@ int Z80::runInstruction(){
         // HALT
         case 0x76:
             PC--;
+            halt = true;
             break;
 
         // LD (hl),a
@@ -1261,8 +1283,9 @@ int Z80::runInstruction(){
 
         // EI: enable interrupts
         case 0xFB:
-            IFF1 = 1;
-            IFF2 = 1;
+            IFF1 = 0;
+            IFF2 = 0;            
+            EI_f = 3;
             break;
 
         // CALL m,**
